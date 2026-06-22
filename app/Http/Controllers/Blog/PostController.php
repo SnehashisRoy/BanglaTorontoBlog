@@ -14,13 +14,13 @@ class PostController extends Controller
     {
         $posts = $this->posts->publishedByLocale(app()->getLocale());
 
-        return view('blog.index', compact('posts'));
+        return view('blog.index', compact('posts') + ['showLocaleSwitch' => true]);
     }
 
     public function show(string $locale, string $slug): View
     {
         $post = $this->posts->findPublishedBySlug($slug, app()->getLocale());
 
-        return view('blog.show', compact('post'));
+        return view('blog.show', compact('post') + ['showLocaleSwitch' => true, 'switcherSlug' => $slug]);
     }
 }

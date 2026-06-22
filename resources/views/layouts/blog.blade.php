@@ -32,16 +32,26 @@
                         @endif
                     @endauth
 
+                    @if($showLocaleSwitch ?? false)
+                    @php
+                        $enUrl = isset($switcherSlug)
+                            ? route('blog.show', ['locale' => 'en', 'slug' => $switcherSlug])
+                            : route('blog.index', ['locale' => 'en']);
+                        $bnUrl = isset($switcherSlug)
+                            ? route('blog.show', ['locale' => 'bn', 'slug' => $switcherSlug])
+                            : route('blog.index', ['locale' => 'bn']);
+                    @endphp
                     <div class="flex items-center gap-1 border border-gray-200 rounded-lg overflow-hidden text-xs">
-                        <a href="{{ route('blog.index', ['locale' => 'en']) }}"
+                        <a href="{{ $enUrl }}"
                            class="px-2.5 py-1.5 transition-colors {{ $locale === 'en' ? 'bg-indigo-600 text-white' : 'hover:bg-gray-100' }}">
                             EN
                         </a>
-                        <a href="{{ route('blog.index', ['locale' => 'bn']) }}"
+                        <a href="{{ $bnUrl }}"
                            class="px-2.5 py-1.5 transition-colors {{ $locale === 'bn' ? 'bg-indigo-600 text-white' : 'hover:bg-gray-100' }}">
                             বাং
                         </a>
                     </div>
+                    @endif
                 </nav>
 
                 {{-- Mobile hamburger --}}
@@ -68,16 +78,18 @@
                     @endif
                 @endauth
 
+                @if($showLocaleSwitch ?? false)
                 <div class="flex items-center gap-1 pt-1 border-t border-gray-100">
-                    <a href="{{ route('blog.index', ['locale' => 'en']) }}"
+                    <a href="{{ $enUrl ?? route('blog.index', ['locale' => 'en']) }}"
                        class="rounded-lg px-3 py-1.5 text-xs transition-colors {{ $locale === 'en' ? 'bg-indigo-600 text-white' : 'border border-gray-200 hover:bg-gray-100' }}">
                         EN
                     </a>
-                    <a href="{{ route('blog.index', ['locale' => 'bn']) }}"
+                    <a href="{{ $bnUrl ?? route('blog.index', ['locale' => 'bn']) }}"
                        class="rounded-lg px-3 py-1.5 text-xs transition-colors {{ $locale === 'bn' ? 'bg-indigo-600 text-white' : 'border border-gray-200 hover:bg-gray-100' }}">
                         বাং
                     </a>
                 </div>
+                @endif
             </nav>
         </div>
     </header>

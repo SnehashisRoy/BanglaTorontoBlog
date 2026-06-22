@@ -5,7 +5,7 @@ use App\Http\Controllers\Blog\CompanyController;
 use App\Http\Controllers\Blog\PostController as BlogPostController;
 use Illuminate\Support\Facades\Route;
 
-Route::inertia('/', 'welcome')->name('home');
+Route::redirect('/', '/bn/blog')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
