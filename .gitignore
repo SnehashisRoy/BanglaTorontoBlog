@@ -28,3 +28,7 @@ yarn-error.log
 /.vscode
 /.zed
 .claude/
+
+# Python
+scripts/__pycache__/
+scripts/*.pyc
