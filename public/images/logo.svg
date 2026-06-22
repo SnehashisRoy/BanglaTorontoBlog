@@ -1,0 +1,43 @@
+<svg width="100%" viewBox="0 0 680 280" role="img" xmlns="http://www.w3.org/2000/svg">
+<defs><mask id="logo-text-gaps" maskUnits="userSpaceOnUse"><rect x="0" y="0" width="680" height="280" fill="white"/><rect x="246" y="70" width="193" height="66" fill="black" rx="2"/><rect x="246" y="128" width="192" height="66" fill="black" rx="2"/></mask></defs>
+<title>BanglaToronto logo — emerald green emblem with maple leaf and white lily</title>
+<desc>BanglaToronto community blog logo with a bright emerald green circular emblem where a red maple leaf overlaps a white water lily, paired with a clean serif wordmark.</desc>
+
+<circle cx="150" cy="140" r="76" fill="#2ecc71"/>
+<circle cx="150" cy="140" r="72" fill="none" stroke="#27ae60" stroke-width="1.2" opacity="0.5"/>
+<circle cx="150" cy="140" r="69" fill="none" stroke="#ffffff" stroke-width="0.8" opacity="0.25"/>
+
+<g transform="translate(150,147)">
+  <ellipse cx="0" cy="-22" rx="7" ry="17" fill="#ffffff" opacity="0.96" transform="rotate(0)"/>
+  <ellipse cx="0" cy="-22" rx="7" ry="17" fill="#ffffff" opacity="0.93" transform="rotate(45)"/>
+  <ellipse cx="0" cy="-22" rx="7" ry="17" fill="#ffffff" opacity="0.93" transform="rotate(90)"/>
+  <ellipse cx="0" cy="-22" rx="7" ry="17" fill="#ffffff" opacity="0.93" transform="rotate(135)"/>
+  <ellipse cx="0" cy="-22" rx="7" ry="17" fill="#ffffff" opacity="0.93" transform="rotate(180)"/>
+  <ellipse cx="0" cy="-22" rx="7" ry="17" fill="#ffffff" opacity="0.93" transform="rotate(225)"/>
+  <ellipse cx="0" cy="-22" rx="7" ry="17" fill="#ffffff" opacity="0.93" transform="rotate(270)"/>
+  <ellipse cx="0" cy="-22" rx="7" ry="17" fill="#ffffff" opacity="0.93" transform="rotate(315)"/>
+  <ellipse cx="0" cy="-15" rx="5" ry="11" fill="#e8f8f0" opacity="0.82" transform="rotate(22.5)"/>
+  <ellipse cx="0" cy="-15" rx="5" ry="11" fill="#e8f8f0" opacity="0.82" transform="rotate(67.5)"/>
+  <ellipse cx="0" cy="-15" rx="5" ry="11" fill="#e8f8f0" opacity="0.82" transform="rotate(112.5)"/>
+  <ellipse cx="0" cy="-15" rx="5" ry="11" fill="#e8f8f0" opacity="0.82" transform="rotate(157.5)"/>
+  <ellipse cx="0" cy="-15" rx="5" ry="11" fill="#e8f8f0" opacity="0.82" transform="rotate(202.5)"/>
+  <ellipse cx="0" cy="-15" rx="5" ry="11" fill="#e8f8f0" opacity="0.82" transform="rotate(247.5)"/>
+  <ellipse cx="0" cy="-15" rx="5" ry="11" fill="#e8f8f0" opacity="0.82" transform="rotate(292.5)"/>
+  <ellipse cx="0" cy="-15" rx="5" ry="11" fill="#e8f8f0" opacity="0.82" transform="rotate(337.5)"/>
+  <circle cx="0" cy="0" r="9" fill="#f0c030"/>
+  <circle cx="0" cy="0" r="5" fill="#d4a000"/>
+</g>
+
+<g transform="translate(150,129) scale(1.15)">
+  <path d="M0,-34 C2,-26 8,-22 13,-18 L9,-16 L17,-11 C12,-7 9,-5 11,-1 L5,-4 L6,6 L0,-1 L-6,6 L-5,-4 L-11,-1 C-9,-5 -12,-7 -17,-11 L-9,-16 L-13,-18 C-8,-22 -2,-26 0,-34Z" fill="#c0392b"/>
+  <line x1="0" y1="6" x2="0" y2="16" stroke="#c0392b" stroke-width="2.8" stroke-linecap="round"/>
+</g>
+
+<text x="250" y="122" style="fill:#1a1a1a;font-family:Georgia, 'Times New Roman', serif;font-size:54px;font-weight:700;">Bangla</text>
+<text x="250" y="180" style="fill:#1a1a1a;font-family:Georgia, 'Times New Roman', serif;font-size:54px;font-weight:400;">Toronto</text>
+
+<line x1="250" y1="84" x2="594" y2="84" stroke="#1a1a1a" stroke-width="0.4" opacity="0.15" mask="url(#logo-text-gaps)"/>
+
+<path d="M250,198 Q394,208 594,197" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+<circle cx="594" cy="197" r="3.5" fill="#c0392b"/>
+</svg>
