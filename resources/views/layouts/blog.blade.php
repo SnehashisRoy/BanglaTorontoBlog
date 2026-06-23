@@ -13,7 +13,7 @@
     <header class="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-gray-200">
         <div class="max-w-3xl mx-auto px-4 sm:px-6">
             <div class="flex items-center justify-between h-24 sm:h-28">
-                <a href="{{ route('blog.index', ['locale' => 'bn']) }}" class="shrink-0">
+                <a href="{{ route('blog.index', ['locale' => $locale]) }}" class="shrink-0">
                     <img src="{{ asset('images/logo.svg') }}" alt="{{ config('app.name') }}" class="h-16 sm:h-24 w-auto">
                 </a>
 
