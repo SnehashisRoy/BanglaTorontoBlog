@@ -7,14 +7,14 @@
     <div class="flex items-center justify-between gap-4 mb-6">
         <h1 class="text-xl sm:text-2xl font-bold text-gray-900">Posts</h1>
         <a href="{{ route('admin.posts.create') }}"
-           class="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 sm:px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors whitespace-nowrap">
+           class="inline-flex items-center gap-1.5 rounded-lg bg-[#27ae60] px-3.5 sm:px-4 py-2 text-sm font-medium text-white hover:bg-[#1a7a44] transition-colors whitespace-nowrap">
             + New Post
         </a>
     </div>
 
     @if($posts->isEmpty())
         <p class="text-gray-500">No posts yet.
-            <a href="{{ route('admin.posts.create') }}" class="text-indigo-600 hover:underline">Create the first one.</a>
+            <a href="{{ route('admin.posts.create') }}" class="text-[#27ae60] hover:underline">Create the first one.</a>
         </p>
     @else
         {{-- Mobile: stacked cards --}}
@@ -43,12 +43,25 @@
                             <span class="rounded px-1.5 py-0.5 font-medium {{ $hasBn ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400' }}">BN</span>
                         </span>
                     </div>
-                    <div class="mt-3 flex gap-4 text-sm font-medium">
-                        <a href="{{ route('admin.posts.edit', $post) }}" class="text-indigo-600 hover:text-indigo-800">Edit</a>
+                    <div class="mt-3 flex flex-wrap gap-2">
+                        <a href="{{ route('admin.posts.edit', $post) }}"
+                           class="inline-flex items-center gap-1 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200 transition-colors">
+                            ✏️ Edit
+                        </a>
+                        @if($post->status === 'published')
+                        <a href="{{ route('blog.show', ['locale' => 'en', 'slug' => $post->slug]) }}"
+                           target="_blank"
+                           class="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-100 transition-colors">
+                            👁 View
+                        </a>
+                        @endif
                         <form action="{{ route('admin.posts.destroy', $post) }}" method="POST" onsubmit="return confirm('Delete this post?')">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="text-red-500 hover:text-red-700">Delete</button>
+                            <button type="submit"
+                                    class="inline-flex items-center gap-1 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 transition-colors">
+                                🗑 Delete
+                            </button>
                         </form>
                     </div>
                 </div>
@@ -65,7 +78,7 @@
                         <th class="px-5 py-3 text-left font-semibold text-gray-600">Translations</th>
                         <th class="px-5 py-3 text-left font-semibold text-gray-600">Status</th>
                         <th class="px-5 py-3 text-left font-semibold text-gray-600">Date</th>
-                        <th class="px-5 py-3"></th>
+                        <th class="px-5 py-3 text-left font-semibold text-gray-600">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -91,16 +104,30 @@
                                     <span class="rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-700">Draft</span>
                                 @endif
                             </td>
-                            <td class="px-5 py-3 text-gray-500">{{ $post->created_at->format('M d, Y') }}</td>
-                            <td class="px-5 py-3 text-right whitespace-nowrap">
-                                <a href="{{ route('admin.posts.edit', $post) }}"
-                                   class="text-indigo-600 hover:text-indigo-800 font-medium mr-4">Edit</a>
-                                <form action="{{ route('admin.posts.destroy', $post) }}" method="POST"
-                                      class="inline" onsubmit="return confirm('Delete this post?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-red-500 hover:text-red-700 font-medium">Delete</button>
-                                </form>
+                            <td class="px-5 py-3 text-gray-500 whitespace-nowrap">{{ $post->created_at->format('M d, Y') }}</td>
+                            <td class="px-5 py-3">
+                                <div class="flex items-center gap-2">
+                                    <a href="{{ route('admin.posts.edit', $post) }}"
+                                       class="inline-flex items-center gap-1 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200 transition-colors whitespace-nowrap">
+                                        ✏️ Edit
+                                    </a>
+                                    @if($post->status === 'published')
+                                    <a href="{{ route('blog.show', ['locale' => 'en', 'slug' => $post->slug]) }}"
+                                       target="_blank"
+                                       class="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-100 transition-colors whitespace-nowrap">
+                                        👁 View
+                                    </a>
+                                    @endif
+                                    <form action="{{ route('admin.posts.destroy', $post) }}" method="POST"
+                                          class="inline" onsubmit="return confirm('Delete this post?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                                class="inline-flex items-center gap-1 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 transition-colors whitespace-nowrap">
+                                            🗑 Delete
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @endforeach
