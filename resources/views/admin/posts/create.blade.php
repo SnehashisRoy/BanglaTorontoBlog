@@ -1,4 +1,4 @@
-@extends('layouts.blog')
+@extends('layouts.admin')
 
 @section('title', 'New Post')
 
@@ -8,7 +8,7 @@
         <a href="{{ route('admin.posts.index') }}" class="text-sm text-indigo-600 hover:text-indigo-800">&larr; Back to posts</a>
     </div>
 
-    <div class="bg-white rounded-xl border border-gray-200 p-5 sm:p-8 max-w-2xl">
+    <div class="bg-white rounded-xl border border-gray-200 p-5 sm:p-8 max-w-3xl">
         <h1 class="text-xl sm:text-2xl font-bold text-gray-900 mb-6">New Post</h1>
 
         @if($errors->any())

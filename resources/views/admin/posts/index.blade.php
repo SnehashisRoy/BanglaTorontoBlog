@@ -1,15 +1,11 @@
-@extends('layouts.blog')
+@extends('layouts.admin')
 
 @section('title', 'Admin — Posts')
 
 @section('content')
 
-    <div class="flex items-center justify-between gap-4 mb-6">
+    <div class="mb-6">
         <h1 class="text-xl sm:text-2xl font-bold text-gray-900">Posts</h1>
-        <a href="{{ route('admin.posts.create') }}"
-           class="inline-flex items-center gap-1.5 rounded-lg bg-[#27ae60] px-3.5 sm:px-4 py-2 text-sm font-medium text-white hover:bg-[#1a7a44] transition-colors whitespace-nowrap">
-            + New Post
-        </a>
     </div>
 
     @if($posts->isEmpty())
