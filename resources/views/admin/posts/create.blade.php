@@ -72,9 +72,9 @@
                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                 </div>
                 <div>
-                    <label for="body_en" class="block text-sm font-medium text-gray-700 mb-1">Body</label>
-                    <textarea id="body_en" name="body_en" rows="8"
-                              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono">{{ old('body_en') }}</textarea>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Body</label>
+                    <div id="editor_en" class="rounded-lg border border-gray-300 bg-white" style="min-height:200px"></div>
+                    <textarea id="body_en" name="body_en" class="hidden">{{ old('body_en') }}</textarea>
                 </div>
             </div>
 
@@ -89,9 +89,9 @@
                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
                 </div>
                 <div>
-                    <label for="body_bn" class="block text-sm font-medium text-gray-700 mb-1">বিষয়বস্তু (Body)</label>
-                    <textarea id="body_bn" name="body_bn" rows="8"
-                              class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono">{{ old('body_bn') }}</textarea>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">বিষয়বস্তু (Body)</label>
+                    <div id="editor_bn" class="rounded-lg border border-gray-300 bg-white" style="min-height:200px"></div>
+                    <textarea id="body_bn" name="body_bn" class="hidden">{{ old('body_bn') }}</textarea>
                 </div>
             </div>
 
@@ -109,3 +109,32 @@
     </div>
 
 @endsection
+
+@push('head')
+    <link href="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.snow.css" rel="stylesheet">
+@endpush
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.js"></script>
+<script>
+    const toolbar = [
+        ['bold', 'italic', 'underline'],
+        ['blockquote'],
+        [{ header: [1, 2, 3, false] }],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        ['link'],
+        ['clean'],
+    ];
+
+    const quillEn = new Quill('#editor_en', { theme: 'snow', modules: { toolbar } });
+    const quillBn = new Quill('#editor_bn', { theme: 'snow', modules: { toolbar } });
+
+    quillEn.root.innerHTML = document.getElementById('body_en').value;
+    quillBn.root.innerHTML = document.getElementById('body_bn').value;
+
+    document.querySelector('form').addEventListener('submit', function () {
+        document.getElementById('body_en').value = quillEn.root.innerHTML;
+        document.getElementById('body_bn').value = quillBn.root.innerHTML;
+    });
+</script>
+@endpush

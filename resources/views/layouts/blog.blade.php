@@ -7,6 +7,7 @@
     <title>@yield('title', __('Blog')) &mdash; {{ config('app.name') }}</title>
     <link rel="icon" type="image/svg+xml" href="{{ asset('images/favicon.svg') }}">
     @vite(['resources/css/app.css'])
+    @stack('head')
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col antialiased">
 
@@ -112,5 +113,6 @@
         </div>
     </footer>
 
+    @stack('scripts')
 </body>
 </html>
