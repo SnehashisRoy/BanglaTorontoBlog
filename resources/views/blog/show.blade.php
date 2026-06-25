@@ -6,10 +6,32 @@
 
 @section('content')
 
-    <div class="mb-6">
+    <div class="mb-6 flex items-center justify-between gap-3">
         <a href="{{ route('blog.index') }}" class="text-sm text-[#27ae60] hover:text-[#1a7a44]">
             &larr; {{ __('Back to posts') }}
         </a>
+
+        @auth
+            @if(auth()->user()->is_admin)
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('admin.posts.edit', $post) }}"
+                       class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        Edit
+                    </a>
+                    <form action="{{ route('admin.posts.destroy', $post) }}" method="POST"
+                          onsubmit="return confirm('Delete this post?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit"
+                                class="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            Delete
+                        </button>
+                    </form>
+                </div>
+            @endif
+        @endauth
     </div>
 
     <article class="bg-white rounded-xl border border-gray-200 overflow-hidden">
