@@ -10,17 +10,22 @@
         <div class="absolute inset-0 opacity-10"
              style="background-image: repeating-linear-gradient(45deg, #2ecc71 0, #2ecc71 1px, transparent 0, transparent 50%); background-size: 20px 20px;"></div>
         <div class="relative px-6 py-10 sm:px-10 sm:py-14 text-white">
-            <div class="flex items-center gap-3 mb-3">
-                <span class="text-3xl">📰</span>
-                <span class="text-xs font-semibold tracking-widest uppercase"
-                      style="color: #2ecc71;">BanglaToronto</span>
-            </div>
+            
             <h1 class="text-2xl sm:text-4xl font-bold leading-tight mb-3">
                 {{ __('Information helps you prosper') }}
             </h1>
             <p class="text-sm sm:text-base opacity-80 max-w-lg">
                 {{ __('News, deals, and resources for the Bengali community in Toronto and the GTA.') }}
             </p>
+
+            <a href="{{ route('companies.index') }}"
+               class="mt-6 inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-transform hover:-translate-y-0.5"
+               style="background: #2ecc71; box-shadow: 0 8px 24px rgba(46,204,113,0.35);">
+                <span class="text-base">🏢</span>
+                {{ __('Explore the Business Directory') }}
+                <span aria-hidden="true">&rarr;</span>
+            </a>
+
             <div class="mt-5 flex items-center gap-2 text-xs opacity-60">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
