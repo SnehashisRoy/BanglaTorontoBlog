@@ -43,14 +43,8 @@
             @foreach($posts as $post)
                 @php $t = $post->translations->first() @endphp
                 <article class="bg-white rounded-xl border border-gray-200 overflow-hidden hover:border-gray-300 hover:shadow-sm transition">
-                    @if($post->image_path)
-                        <a href="{{ route('blog.show', ['slug' => $post->slug]) }}" class="block">
-                            <img src="{{ $post->imageUrl() }}" alt="{{ $t?->title }}"
-                                 class="w-full h-44 sm:h-52 object-cover">
-                        </a>
-                    @endif
                     <div class="p-5 sm:p-6">
-                        <div class="flex items-center gap-2 mb-3 text-xs text-gray-500">
+                        <div class="flex items-center gap-2 mb-2 sm:mb-3 text-xs text-gray-500">
                             @if($post->category)
                                 <span class="rounded-full px-2.5 py-1 font-medium rounded-full" style="background:#e8f8f0; color:#27ae60;">
                                     {{ $post->category->name }}
@@ -66,12 +60,21 @@
                             </a>
                         </h2>
 
-                        <p class="text-gray-600 text-sm leading-relaxed line-clamp-3">
-                            {{ Str::limit(strip_tags($t?->body ?? ''), 200) }}
-                        </p>
+                        <div class="flex items-start justify-between gap-4">
+                            <p class="min-w-0 flex-1 text-gray-600 text-sm leading-relaxed line-clamp-2 sm:line-clamp-3">
+                                {{ Str::limit(strip_tags($t?->body ?? ''), 200) }}
+                            </p>
+
+                            @if($post->image_path)
+                                <a href="{{ route('blog.show', ['slug' => $post->slug]) }}" class="shrink-0">
+                                    <img src="{{ $post->imageUrl() }}" alt="{{ $t?->title }}"
+                                         class="w-20 h-20 sm:w-28 sm:h-28 rounded-lg object-cover">
+                                </a>
+                            @endif
+                        </div>
 
                         <a href="{{ route('blog.show', ['slug' => $post->slug]) }}"
-                           class="mt-4 inline-flex items-center text-sm font-medium text-[#27ae60] hover:text-[#1a7a44]">
+                           class="mt-3 sm:mt-4 inline-flex items-center text-sm font-medium text-[#27ae60] hover:text-[#1a7a44]">
                             {{ __('Read more') }} &rarr;
                         </a>
                     </div>
