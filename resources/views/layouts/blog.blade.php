@@ -7,6 +7,7 @@
     <title>@yield('title', __('Blog')) &mdash; {{ config('app.name') }}</title>
     <link rel="icon" type="image/svg+xml" href="{{ asset('images/favicon.svg') }}">
     @vite(['resources/css/app.css'])
+    @include('partials.google-analytics')
     @stack('head')
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col antialiased">
