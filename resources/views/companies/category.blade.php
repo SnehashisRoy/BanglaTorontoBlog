@@ -1,4 +1,4 @@
-@extends('layouts.blog')
+@extends('layouts.public')
 
 @section('title', $label . ' — Business Directory')
 

@@ -22,13 +22,12 @@ class PostRepository
         return $post->load('translations');
     }
 
-
     public function publishedByLocale(string $locale, int $perPage = 10): LengthAwarePaginator
     {
         return Post::with([
-                'category',
-                'translations' => fn ($q) => $q->where('language', $locale),
-            ])
+            'category',
+            'translations' => fn ($q) => $q->where('language', $locale),
+        ])
             ->where('status', 'published')
             ->hasTranslation($locale)
             ->latest()
@@ -38,9 +37,9 @@ class PostRepository
     public function findPublishedBySlug(string $slug, string $locale): Post
     {
         return Post::with([
-                'category',
-                'translations' => fn ($q) => $q->where('language', $locale),
-            ])
+            'category',
+            'translations' => fn ($q) => $q->where('language', $locale),
+        ])
             ->where('slug', $slug)
             ->where('status', 'published')
             ->hasTranslation($locale)

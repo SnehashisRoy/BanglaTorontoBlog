@@ -50,7 +50,8 @@ class GenerateDealsBlogPost extends Command
             $deals = $this->fetchRelevantDeals($store['url']);
 
             if ($deals->isEmpty()) {
-                $this->warn("  No relevant deals found — skipping.");
+                $this->warn('  No relevant deals found — skipping.');
+
                 continue;
             }
 
@@ -60,6 +61,7 @@ class GenerateDealsBlogPost extends Command
                 [$en, $bn] = $this->generateContent($client, $store['name'], $deals);
             } catch (\Throwable $e) {
                 $this->error("  Claude error: {$e->getMessage()}");
+
                 continue;
             }
 
@@ -78,7 +80,7 @@ class GenerateDealsBlogPost extends Command
         }
 
         $this->line('');
-        $this->info("Done. Created {$created}/" . count($stores) . " blog posts.");
+        $this->info("Done. Created {$created}/".count($stores).' blog posts.');
 
         return $created > 0 ? Command::SUCCESS : Command::FAILURE;
     }
@@ -97,7 +99,7 @@ class GenerateDealsBlogPost extends Command
         ));
 
         if (empty($matches)) {
-            $this->error("No store matched '{$filter}'. Available: " .
+            $this->error("No store matched '{$filter}'. Available: ".
                 implode(', ', array_column(self::STORES, 'name')));
         }
 
@@ -120,7 +122,7 @@ class GenerateDealsBlogPost extends Command
 
     private function generateContent(Client $client, string $storeName, Collection $deals): array
     {
-        $dealLines = $deals->map(fn ($d) => "- {$d->title}: \${$d->price}" .
+        $dealLines = $deals->map(fn ($d) => "- {$d->title}: \${$d->price}".
             ($d->valid_to ? " (valid until {$d->valid_to})" : '')
         )->implode("\n");
 

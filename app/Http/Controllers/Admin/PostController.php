@@ -36,17 +36,17 @@ class PostController extends Controller
 
         $post = Post::create([
             'category_id' => $data['category_id'],
-            'slug'        => Str::slug($data['slug'] ?: $fallbackTitle),
-            'status'      => $data['status'],
-            'image_path'  => $request->file('image')?->store('posts', 'public'),
+            'slug' => Str::slug($data['slug'] ?: $fallbackTitle),
+            'status' => $data['status'],
+            'image_path' => $request->file('image')?->store('posts', 'public'),
         ]);
 
         foreach (['en', 'bn'] as $locale) {
             if (! empty($data["title_{$locale}"])) {
                 $post->translations()->create([
                     'language' => $locale,
-                    'title'    => $data["title_{$locale}"],
-                    'body'     => $data["body_{$locale}"],
+                    'title' => $data["title_{$locale}"],
+                    'body' => $data["body_{$locale}"],
                 ]);
             }
         }
@@ -57,7 +57,7 @@ class PostController extends Controller
     public function edit(Post $post): View
     {
         $post->load('translations');
-        $categories  = Category::orderBy('name')->get();
+        $categories = Category::orderBy('name')->get();
         $enTranslation = $post->translation('en');
         $bnTranslation = $post->translation('bn');
 
@@ -84,9 +84,9 @@ class PostController extends Controller
 
         $post->update([
             'category_id' => $data['category_id'],
-            'slug'        => Str::slug($data['slug'] ?: $fallbackTitle),
-            'status'      => $data['status'],
-            'image_path'  => $imagePath,
+            'slug' => Str::slug($data['slug'] ?: $fallbackTitle),
+            'status' => $data['status'],
+            'image_path' => $imagePath,
         ]);
 
         foreach (['en', 'bn'] as $locale) {

@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', __('Blog')) &mdash; {{ config('app.name') }}</title>
+    <title>@yield('title', __('Home')) &mdash; {{ config('app.name') }}</title>
     <link rel="icon" type="image/svg+xml" href="{{ asset('images/favicon.svg') }}">
     @vite(['resources/css/app.css'])
     @include('partials.google-analytics')
@@ -15,13 +15,18 @@
     <header class="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-gray-200">
         <div class="max-w-3xl mx-auto px-4 sm:px-6">
             <div class="flex items-center justify-between h-24 sm:h-28">
-                <a href="{{ route('blog.index', ['locale' => $locale]) }}" class="shrink-0">
+                <a href="{{ route('home') }}" class="shrink-0">
                     <img src="{{ asset('images/logo.svg') }}" alt="{{ config('app.name') }}" class="h-16 sm:h-24 w-auto">
                 </a>
 
                 {{-- Desktop nav --}}
                 <nav class="hidden sm:flex items-center gap-5 text-sm font-medium text-gray-600">
-                    <a href="{{ route('blog.index', ['locale' => $locale]) }}" class="hover:text-gray-900">{{ __('Blog') }}</a>
+                    <a href="{{ route('home') }}"
+                       class="hover:text-gray-900 {{ request()->routeIs('home') ? 'text-gray-900 font-semibold' : '' }}">{{ __('Shop') }}</a>
+                    <a href="{{ route('shops.index') }}"
+                       class="hover:text-gray-900 {{ request()->routeIs('shops.*') ? 'text-gray-900 font-semibold' : '' }}">{{ __('Shops') }}</a>
+                    <a href="{{ route('blog.index', ['locale' => $locale]) }}"
+                       class="hover:text-gray-900 {{ request()->routeIs('blog.*') ? 'text-gray-900 font-semibold' : '' }}">{{ __('Blog') }}</a>
                     <a href="{{ route('companies.index') }}"
                        class="font-semibold transition-colors"
                        style="color: #27ae60;"
@@ -29,6 +34,12 @@
                        onmouseout="this.style.color='#27ae60'">{{ __('Businesses') }}</a>
 
                     @auth
+                        @if(auth()->user()->vendor)
+                            <a href="{{ route('vendor.dashboard') }}" class="hover:text-gray-900">{{ __('My Shop') }}</a>
+                        @else
+                            <a href="{{ route('vendor.register') }}" class="hover:text-gray-900">{{ __('Sell With Us') }}</a>
+                        @endif
+
                         @if(auth()->user()->is_admin)
                             <a href="{{ route('admin.posts.index') }}" class="hover:text-gray-900">{{ __('Admin') }}</a>
                         @endif
@@ -69,12 +80,20 @@
 
             {{-- Mobile nav panel --}}
             <nav id="mobile-nav" class="hidden sm:hidden border-t border-gray-200 py-3 space-y-3 text-sm font-medium text-gray-600">
+                <a href="{{ route('home') }}" class="block py-1.5 hover:text-gray-900">{{ __('Shop') }}</a>
+                <a href="{{ route('shops.index') }}" class="block py-1.5 hover:text-gray-900">{{ __('Shops') }}</a>
                 <a href="{{ route('blog.index', ['locale' => $locale]) }}" class="block py-1.5 hover:text-gray-900">{{ __('Blog') }}</a>
                 <a href="{{ route('companies.index') }}"
                    class="block py-1.5 font-semibold"
                    style="color: #27ae60;">{{ __('Businesses') }}</a>
 
                 @auth
+                    @if(auth()->user()->vendor)
+                        <a href="{{ route('vendor.dashboard') }}" class="block py-1.5 hover:text-gray-900">{{ __('My Shop') }}</a>
+                    @else
+                        <a href="{{ route('vendor.register') }}" class="block py-1.5 hover:text-gray-900">{{ __('Sell With Us') }}</a>
+                    @endif
+
                     @if(auth()->user()->is_admin)
                         <a href="{{ route('admin.posts.index') }}" class="block py-1.5 hover:text-gray-900">{{ __('Admin') }}</a>
                     @endif
@@ -109,6 +128,43 @@
     </main>
 
     <footer class="border-t border-gray-200 mt-auto">
+        <div class="border-b border-gray-200" style="background: linear-gradient(135deg, #1a1a1a 0%, #27ae60 100%);">
+            <div class="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10 flex flex-col sm:flex-row items-center justify-between gap-4 text-white">
+                <div class="text-center sm:text-left">
+                    <p class="font-semibold text-base sm:text-lg">{{ __('Have products to sell?') }}</p>
+                    <p class="text-sm opacity-80 mt-0.5">{{ __('Open your shop and start listing products in minutes.') }}</p>
+                </div>
+
+                @auth
+                    @if(auth()->user()->vendor)
+                        <a href="{{ route('vendor.dashboard') }}"
+                           class="shrink-0 inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-transform hover:-translate-y-0.5"
+                           style="background: #2ecc71; box-shadow: 0 8px 24px rgba(46,204,113,0.35);">
+                            🏪 {{ __('Go to My Dashboard') }}
+                        </a>
+                    @else
+                        <a href="{{ route('vendor.register') }}"
+                           class="shrink-0 inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-transform hover:-translate-y-0.5"
+                           style="background: #2ecc71; box-shadow: 0 8px 24px rgba(46,204,113,0.35);">
+                            🏪 {{ __('Create Your Shop') }}
+                        </a>
+                    @endif
+                @else
+                    <div class="shrink-0 flex items-center gap-2">
+                        <a href="{{ route('register') }}"
+                           class="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-transform hover:-translate-y-0.5"
+                           style="background: #2ecc71; box-shadow: 0 8px 24px rgba(46,204,113,0.35);">
+                            {{ __('Register') }}
+                        </a>
+                        <a href="{{ route('login') }}"
+                           class="inline-flex items-center gap-2 rounded-lg border border-white/40 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10">
+                            {{ __('Log In') }}
+                        </a>
+                    </div>
+                @endauth
+            </div>
+        </div>
+
         <div class="max-w-3xl mx-auto px-4 sm:px-6 py-6 text-sm text-gray-400 text-center">
             &copy; {{ date('Y') }} {{ config('app.name') }}
         </div>

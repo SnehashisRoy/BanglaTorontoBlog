@@ -14,10 +14,10 @@ return new class extends Migration
         if (DB::table('post_translations')->count() === 0 && Schema::hasColumn('posts', 'title')) {
             DB::table('posts')->get()->each(function (object $post) {
                 DB::table('post_translations')->insert([
-                    'post_id'    => $post->id,
-                    'language'   => $post->language ?? 'en',
-                    'title'      => $post->title,
-                    'body'       => $post->body,
+                    'post_id' => $post->id,
+                    'language' => $post->language ?? 'en',
+                    'title' => $post->title,
+                    'body' => $post->body,
                     'created_at' => $post->created_at,
                     'updated_at' => $post->updated_at,
                 ]);
@@ -50,7 +50,7 @@ return new class extends Migration
                     ->first();
 
                 DB::table('posts')->where('id', $post->id)->update([
-                    'slug' => Str::slug(($t?->title ?? '') ?: 'post-' . $post->id),
+                    'slug' => Str::slug(($t?->title ?? '') ?: 'post-'.$post->id),
                 ]);
             });
 
@@ -77,8 +77,8 @@ return new class extends Migration
 
         DB::table('post_translations')->get()->each(function (object $t) {
             DB::table('posts')->where('id', $t->post_id)->update([
-                'title'    => $t->title,
-                'body'     => $t->body,
+                'title' => $t->title,
+                'body' => $t->body,
                 'language' => $t->language,
             ]);
         });

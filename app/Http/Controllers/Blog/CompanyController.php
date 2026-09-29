@@ -25,14 +25,14 @@ class CompanyController extends Controller
         abort_if($companies->isEmpty(), 404);
 
         $label = Company::CATEGORY_LABELS[$slug] ?? ucwords(str_replace('-', ' ', $slug));
-        $icon  = Company::CATEGORY_ICONS[$slug] ?? '🏢';
+        $icon = Company::CATEGORY_ICONS[$slug] ?? '🏢';
 
         return view('companies.category', compact('companies', 'slug', 'label', 'icon'));
     }
 
     public function show(string $slug, string $companySlug): View
     {
-        $company       = $this->companies->find($slug, $companySlug);
+        $company = $this->companies->find($slug, $companySlug);
         $categoryLabel = Company::CATEGORY_LABELS[$slug] ?? ucwords(str_replace('-', ' ', $slug));
 
         return view('companies.show', compact('company', 'categoryLabel'));

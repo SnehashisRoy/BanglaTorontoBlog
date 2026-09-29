@@ -1,4 +1,4 @@
-@extends('layouts.blog')
+@extends('layouts.public')
 
 @php $t = $post->translations->first() @endphp
 

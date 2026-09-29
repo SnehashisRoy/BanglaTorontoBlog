@@ -17,15 +17,15 @@ class PostSeeder extends Seeder
 
         $post = Post::create([
             'category_id' => $tech->id,
-            'slug'        => 'getting-started-with-laravel',
-            'status'      => 'published',
+            'slug' => 'getting-started-with-laravel',
+            'status' => 'published',
         ]);
 
         $post->translations()->createMany([
             [
                 'language' => 'en',
-                'title'    => 'Getting Started with Laravel',
-                'body'     => <<<EOT
+                'title' => 'Getting Started with Laravel',
+                'body' => <<<'EOT'
 Laravel is a web application framework with expressive, elegant syntax. It attempts to take the pain out of development by easing common tasks used in most web projects.
 
 Laravel makes it easy to build modern PHP applications. With built-in routing, migrations, Eloquent ORM, and a powerful templating engine, you can go from idea to production faster than ever.
@@ -35,8 +35,8 @@ EOT,
             ],
             [
                 'language' => 'bn',
-                'title'    => 'Laravel দিয়ে শুরু করুন',
-                'body'     => <<<EOT
+                'title' => 'Laravel দিয়ে শুরু করুন',
+                'body' => <<<'EOT'
 Laravel একটি শক্তিশালী PHP ফ্রেমওয়ার্ক যা দিয়ে সহজেই ওয়েব অ্যাপ্লিকেশন তৈরি করা যায়। এটি ডেভেলপমেন্টকে সহজ ও আনন্দদায়ক করে তোলে।
 
 Laravel-এর বিল্ট-ইন রাউটিং, মাইগ্রেশন, Eloquent ORM এবং Blade টেমপ্লেট ইঞ্জিন ব্যবহার করে আপনি দ্রুত যেকোনো অ্যাপ্লিকেশন তৈরি করতে পারবেন।

@@ -3,8 +3,8 @@
 namespace App\Repositories;
 
 use App\Models\Company;
-use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Support\Collection;
 
 class CompanyRepository
 {
@@ -16,9 +16,9 @@ class CompanyRepository
             ->orderByDesc('count')
             ->get()
             ->map(fn ($row) => (object) [
-                'slug'  => $row->slug,
+                'slug' => $row->slug,
                 'label' => Company::CATEGORY_LABELS[$row->slug] ?? ucwords(str_replace('-', ' ', $row->slug)),
-                'icon'  => Company::CATEGORY_ICONS[$row->slug] ?? '🏢',
+                'icon' => Company::CATEGORY_ICONS[$row->slug] ?? '🏢',
                 'count' => $row->count,
             ]);
     }

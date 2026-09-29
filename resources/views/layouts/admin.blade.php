@@ -15,7 +15,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center gap-6">
-                    <a href="{{ route('blog.index', ['locale' => $locale]) }}" class="shrink-0">
+                    <a href="{{ route('home') }}" class="shrink-0">
                         <img src="{{ asset('images/logo.svg') }}" alt="{{ config('app.name') }}" class="h-10 w-auto">
                     </a>
                     <span class="text-xs font-semibold uppercase tracking-widest text-gray-400">Admin</span>
@@ -30,9 +30,9 @@
                        class="inline-flex items-center gap-1.5 rounded-lg bg-[#27ae60] px-3.5 py-1.5 text-sm font-medium text-white hover:bg-[#1a7a44] transition-colors">
                         + New Post
                     </a>
-                    <a href="{{ route('blog.index', ['locale' => $locale]) }}"
+                    <a href="{{ route('home') }}"
                        class="px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500">
-                        ← Blog
+                        ← Site
                     </a>
                 </nav>
             </div>
