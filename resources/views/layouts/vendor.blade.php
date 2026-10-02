@@ -41,6 +41,12 @@
                        class="px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500">
                         ← {{ __('Site') }}
                     </a>
+                    <form action="{{ route('logout') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-500">
+                            {{ __('Log Out') }}
+                        </button>
+                    </form>
                 </nav>
             </div>
         </div>

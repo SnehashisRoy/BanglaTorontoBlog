@@ -45,6 +45,14 @@ class VendorApprovalTest extends TestCase
         $response->assertSee('Approved Shop');
     }
 
+    public function test_admin_layout_has_a_logout_control(): void
+    {
+        $response = $this->actingAs($this->admin())->get(route('admin.vendors.index'));
+
+        $response->assertOk();
+        $response->assertSee(route('logout'), false);
+    }
+
     public function test_admin_can_approve_a_pending_vendor(): void
     {
         $vendor = Vendor::factory()->pending()->create();

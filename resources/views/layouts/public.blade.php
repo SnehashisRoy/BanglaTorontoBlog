@@ -43,6 +43,11 @@
                         @if(auth()->user()->is_admin)
                             <a href="{{ route('admin.posts.index') }}" class="hover:text-gray-900">{{ __('Admin') }}</a>
                         @endif
+
+                        <form action="{{ route('logout') }}" method="POST">
+                            @csrf
+                            <button type="submit" class="hover:text-gray-900">{{ __('Log Out') }}</button>
+                        </form>
                     @endauth
 
                     @if($showLocaleSwitch ?? false)
@@ -97,6 +102,11 @@
                     @if(auth()->user()->is_admin)
                         <a href="{{ route('admin.posts.index') }}" class="block py-1.5 hover:text-gray-900">{{ __('Admin') }}</a>
                     @endif
+
+                    <form action="{{ route('logout') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="block py-1.5 hover:text-gray-900">{{ __('Log Out') }}</button>
+                    </form>
                 @endauth
 
                 @if($showLocaleSwitch ?? false)

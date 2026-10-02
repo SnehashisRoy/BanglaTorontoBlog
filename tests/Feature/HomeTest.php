@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\User;
 use App\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -17,6 +18,16 @@ class HomeTest extends TestCase
         $response = $this->get(route('home'));
 
         $response->assertOk();
+    }
+
+    public function test_logged_in_user_sees_a_logout_control_on_the_public_layout(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('home'));
+
+        $response->assertOk();
+        $response->assertSee(route('logout'), false);
     }
 
     public function test_home_page_only_shows_published_products_from_active_vendors(): void
