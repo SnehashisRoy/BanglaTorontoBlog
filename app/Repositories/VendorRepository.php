@@ -22,6 +22,18 @@ class VendorRepository
         return Vendor::active()->where('slug', $slug)->firstOrFail();
     }
 
+    /**
+     * All vendors for the admin list — pending requests first, then newest.
+     */
+    public function allWithProductCounts(): Collection
+    {
+        return Vendor::with('user')
+            ->withCount('products')
+            ->orderByRaw('status = ? desc', [Vendor::STATUS_PENDING])
+            ->latest()
+            ->get();
+    }
+
     public function createForUser(User $user, array $data): Vendor
     {
         return Vendor::create([
@@ -36,7 +48,15 @@ class VendorRepository
             'address' => $data['address'] ?? null,
             'city' => $data['city'] ?? null,
             'website' => $data['website'] ?? null,
+            'status' => Vendor::STATUS_PENDING,
         ]);
+    }
+
+    public function setStatus(Vendor $vendor, string $status): Vendor
+    {
+        $vendor->update(['status' => $status]);
+
+        return $vendor;
     }
 
     public function updateForUser(Vendor $vendor, array $data): Vendor

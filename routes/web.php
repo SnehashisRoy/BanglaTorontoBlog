@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\PostController as AdminPostController;
+use App\Http\Controllers\Admin\VendorController as AdminVendorController;
 use App\Http\Controllers\Blog\CompanyController;
 use App\Http\Controllers\Blog\PostController as BlogPostController;
 use App\Http\Controllers\HomeController;
@@ -8,6 +9,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\Vendor\DashboardController as VendorDashboardController;
 use App\Http\Controllers\Vendor\ProductController as VendorProductController;
+use App\Http\Controllers\Vendor\ProductSuggestionController;
 use App\Http\Controllers\Vendor\RegistrationController as VendorRegistrationController;
 use App\Http\Controllers\Vendor\ShopController as VendorShopController;
 use Illuminate\Support\Facades\Route;
@@ -36,6 +38,7 @@ Route::prefix('vendor')->name('vendor.')->middleware(['auth', 'vendor'])->group(
     Route::get('/', [VendorDashboardController::class, 'index'])->name('dashboard');
     Route::get('/shop', [VendorShopController::class, 'edit'])->name('shop.edit');
     Route::put('/shop', [VendorShopController::class, 'update'])->name('shop.update');
+    Route::post('/products/suggest-description', [ProductSuggestionController::class, 'store'])->name('products.suggest-description');
     Route::resource('products', VendorProductController::class)->except(['show']);
 });
 
@@ -62,6 +65,12 @@ Route::prefix('businesses')->name('companies.')->group(function () {
 // Admin routes — requires login + admin flag (no locale prefix needed)
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     Route::resource('posts', AdminPostController::class)->except(['show']);
+
+    Route::prefix('vendors')->name('vendors.')->group(function () {
+        Route::get('/', [AdminVendorController::class, 'index'])->name('index');
+        Route::patch('/{vendor}/approve', [AdminVendorController::class, 'approve'])->name('approve');
+        Route::patch('/{vendor}/mark-pending', [AdminVendorController::class, 'markPending'])->name('mark-pending');
+    });
 });
 
 require __DIR__.'/settings.php';

@@ -41,7 +41,23 @@ class RegistrationTest extends TestCase
         $this->assertDatabaseHas('vendors', [
             'user_id' => $user->id,
             'name' => 'Dhaka Grocers',
+            'status' => Vendor::STATUS_PENDING,
         ]);
+    }
+
+    public function test_a_newly_registered_shop_is_not_publicly_visible_until_approved(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post(route('vendor.register.store'), [
+            'name' => 'Dhaka Grocers',
+            'phone' => '416-555-0199',
+        ]);
+
+        $vendor = Vendor::where('name', 'Dhaka Grocers')->first();
+
+        $this->get(route('shops.index'))->assertDontSee('Dhaka Grocers');
+        $this->get(route('shops.show', $vendor->slug))->assertNotFound();
     }
 
     public function test_a_user_cannot_create_a_second_vendor_shop(): void

@@ -26,6 +26,15 @@
                        class="px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors {{ request()->routeIs('admin.posts.index') ? 'bg-gray-100 text-gray-900' : '' }}">
                         Posts
                     </a>
+                    <a href="{{ route('admin.vendors.index') }}"
+                       class="relative px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors {{ request()->routeIs('admin.vendors.*') ? 'bg-gray-100 text-gray-900' : '' }}">
+                        Vendors
+                        @if(($pendingVendorCount ?? 0) > 0)
+                            <span class="absolute -top-1 -right-1 inline-flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold w-4 h-4">
+                                {{ $pendingVendorCount }}
+                            </span>
+                        @endif
+                    </a>
                     <a href="{{ route('admin.posts.create') }}"
                        class="inline-flex items-center gap-1.5 rounded-lg bg-[#27ae60] px-3.5 py-1.5 text-sm font-medium text-white hover:bg-[#1a7a44] transition-colors">
                         + New Post

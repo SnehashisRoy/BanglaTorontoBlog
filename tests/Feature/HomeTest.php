@@ -22,7 +22,7 @@ class HomeTest extends TestCase
     public function test_home_page_only_shows_published_products_from_active_vendors(): void
     {
         $activeVendor = Vendor::factory()->create();
-        $inactiveVendor = Vendor::factory()->inactive()->create();
+        $inactiveVendor = Vendor::factory()->pending()->create();
 
         $published = Product::factory()->for($activeVendor)->create(['status' => 'published']);
         $draft = Product::factory()->for($activeVendor)->create(['status' => 'draft']);

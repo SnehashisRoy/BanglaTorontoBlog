@@ -23,6 +23,18 @@
             @csrf
 
             <div>
+                <label for="images" class="block text-sm font-medium text-gray-700 mb-1">Photos</label>
+                <input type="file" id="images" name="images[]" accept="image/*" multiple
+                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#27ae60] focus:outline-none focus:ring-1 focus:ring-[#27ae60]">
+                <p class="mt-1 text-xs text-gray-400">JPG, PNG or WEBP, up to 2MB each, up to 8 photos. First photo is the cover image.</p>
+                <p id="ai-status" class="mt-2 text-xs text-gray-500 hidden"></p>
+                <button type="button" id="ai-regenerate"
+                        class="hidden mt-1 inline-flex items-center gap-1 text-xs font-medium text-[#27ae60] hover:text-[#1a7a44] hover:underline">
+                    ↻ Regenerate title &amp; description with AI
+                </button>
+            </div>
+
+            <div>
                 <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
                 <input type="text" id="name" name="name" value="{{ old('name') }}" required
                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#27ae60] focus:outline-none focus:ring-1 focus:ring-[#27ae60]">
@@ -63,13 +75,6 @@
                           class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#27ae60] focus:outline-none focus:ring-1 focus:ring-[#27ae60]">{{ old('description') }}</textarea>
             </div>
 
-            <div>
-                <label for="images" class="block text-sm font-medium text-gray-700 mb-1">Photos</label>
-                <input type="file" id="images" name="images[]" accept="image/*" multiple
-                       class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#27ae60] focus:outline-none focus:ring-1 focus:ring-[#27ae60]">
-                <p class="mt-1 text-xs text-gray-400">JPG, PNG or WEBP, up to 2MB each, up to 8 photos. First photo is the cover image.</p>
-            </div>
-
             <div class="flex flex-col sm:flex-row gap-3 pt-2">
                 <button type="submit"
                         class="rounded-lg bg-[#27ae60] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#1a7a44] transition-colors text-center">
@@ -84,3 +89,80 @@
     </div>
 
 @endsection
+
+@push('scripts')
+<script>
+(function () {
+    const imagesInput = document.getElementById('images');
+    const nameInput = document.getElementById('name');
+    const descriptionInput = document.getElementById('description');
+    const categorySelect = document.getElementById('product_category_id');
+    const aiStatus = document.getElementById('ai-status');
+    const aiRegenerate = document.getElementById('ai-regenerate');
+
+    let lastFile = null;
+
+    function setStatus(text) {
+        aiStatus.textContent = text;
+        aiStatus.classList.remove('hidden');
+    }
+
+    async function requestSuggestion(file) {
+        setStatus('✨ Generating title & description from your photo…');
+        aiRegenerate.disabled = true;
+
+        const formData = new FormData();
+        formData.append('image', file);
+        if (categorySelect.value) {
+            formData.append('product_category_id', categorySelect.value);
+        }
+
+        try {
+            const response = await fetch('{{ route('vendor.products.suggest-description') }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    Accept: 'application/json',
+                },
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error('request failed');
+            }
+
+            const data = await response.json();
+            nameInput.value = data.name;
+            descriptionInput.value = data.description;
+            setStatus('✨ Suggested by AI from your photo — feel free to edit before publishing.');
+            aiRegenerate.classList.remove('hidden');
+        } catch (error) {
+            setStatus('Could not generate a suggestion for this photo. You can fill this in yourself.');
+        } finally {
+            aiRegenerate.disabled = false;
+        }
+    }
+
+    imagesInput.addEventListener('change', function () {
+        if (imagesInput.files.length === 0) {
+            return;
+        }
+
+        lastFile = imagesInput.files[0];
+
+        // Only auto-fill empty fields so we never clobber what the vendor already typed.
+        if (!nameInput.value.trim() && !descriptionInput.value.trim()) {
+            requestSuggestion(lastFile);
+        } else {
+            aiRegenerate.classList.remove('hidden');
+        }
+    });
+
+    aiRegenerate.addEventListener('click', function () {
+        if (lastFile) {
+            requestSuggestion(lastFile);
+        }
+    });
+})();
+</script>
+@endpush

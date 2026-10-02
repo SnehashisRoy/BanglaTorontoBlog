@@ -9,6 +9,12 @@
         <p class="text-sm text-gray-500 mt-1">Welcome back.</p>
     </div>
 
+    @if($vendor->isPending())
+        <div class="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+            <span class="font-semibold">⏳ Pending approval</span> — your shop isn't visible to shoppers yet. An admin needs to approve it first. You can still set up your profile and products while you wait.
+        </div>
+    @endif
+
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         <div class="bg-white rounded-xl border border-gray-200 p-5">
             <p class="text-2xl font-bold text-gray-900">{{ $stats['published'] }}</p>
@@ -33,10 +39,12 @@
            class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
             Edit Shop Profile
         </a>
-        <a href="{{ route('shops.show', $vendor->slug) }}" target="_blank"
-           class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-            View My Shop ↗
-        </a>
+        @if($vendor->isApproved())
+            <a href="{{ route('shops.show', $vendor->slug) }}" target="_blank"
+               class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                View My Shop ↗
+            </a>
+        @endif
     </div>
 
 @endsection

@@ -15,7 +15,7 @@ class ProductRepository
     {
         $query = Product::with(['vendor', 'category', 'images'])
             ->published()
-            ->whereHas('vendor', fn ($q) => $q->where('is_active', true));
+            ->whereHas('vendor', fn ($q) => $q->where('status', Vendor::STATUS_APPROVED));
 
         if (! empty($filters['category'])) {
             $query->whereHas('category', fn ($q) => $q->where('slug', $filters['category']));
@@ -40,7 +40,7 @@ class ProductRepository
     {
         return Product::with(['vendor', 'category', 'images'])
             ->published()
-            ->whereHas('vendor', fn ($q) => $q->where('is_active', true)->where('slug', $vendorSlug))
+            ->whereHas('vendor', fn ($q) => $q->where('status', Vendor::STATUS_APPROVED)->where('slug', $vendorSlug))
             ->where('slug', $productSlug)
             ->firstOrFail();
     }

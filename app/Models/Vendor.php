@@ -17,17 +17,14 @@ class Vendor extends Model
 {
     use HasFactory;
 
+    public const STATUS_PENDING = 'pending';
+
+    public const STATUS_APPROVED = 'approved';
+
     protected $fillable = [
         'user_id', 'name', 'slug', 'description', 'logo_path',
-        'phone', 'email', 'whatsapp', 'address', 'city', 'website', 'is_active',
+        'phone', 'email', 'whatsapp', 'address', 'city', 'website', 'status',
     ];
-
-    protected function casts(): array
-    {
-        return [
-            'is_active' => 'boolean',
-        ];
-    }
 
     public function getRouteKeyName(): string
     {
@@ -55,7 +52,17 @@ class Vendor extends Model
      */
     public function scopeActive(Builder $query): void
     {
-        $query->where('is_active', true);
+        $query->where('status', self::STATUS_APPROVED);
+    }
+
+    public function isPending(): bool
+    {
+        return $this->status === self::STATUS_PENDING;
+    }
+
+    public function isApproved(): bool
+    {
+        return $this->status === self::STATUS_APPROVED;
     }
 
     public function logoUrl(): ?string

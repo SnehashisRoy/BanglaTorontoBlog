@@ -14,7 +14,7 @@ class ShopTest extends TestCase
     public function test_shops_index_lists_active_vendors(): void
     {
         $vendor = Vendor::factory()->create();
-        $inactive = Vendor::factory()->inactive()->create();
+        $inactive = Vendor::factory()->pending()->create();
 
         $response = $this->get(route('shops.index'));
 
@@ -42,7 +42,7 @@ class ShopTest extends TestCase
 
     public function test_inactive_vendor_shop_page_404s(): void
     {
-        $vendor = Vendor::factory()->inactive()->create();
+        $vendor = Vendor::factory()->pending()->create();
 
         $response = $this->get(route('shops.show', $vendor->slug));
 

@@ -87,6 +87,11 @@
                 <input type="file" id="images" name="images[]" accept="image/*" multiple
                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#27ae60] focus:outline-none focus:ring-1 focus:ring-[#27ae60]">
                 <p class="mt-1 text-xs text-gray-400">JPG, PNG or WEBP, up to 2MB each, up to 8 photos total.</p>
+                <p id="ai-status" class="mt-2 text-xs text-gray-500 hidden"></p>
+                <button type="button" id="ai-regenerate"
+                        class="hidden mt-1 inline-flex items-center gap-1 text-xs font-medium text-[#27ae60] hover:text-[#1a7a44] hover:underline">
+                    ✨ Suggest title &amp; description with AI
+                </button>
             </div>
 
             <div class="flex flex-col sm:flex-row gap-3 pt-2">
@@ -103,3 +108,75 @@
     </div>
 
 @endsection
+
+@push('scripts')
+<script>
+(function () {
+    const imagesInput = document.getElementById('images');
+    const nameInput = document.getElementById('name');
+    const descriptionInput = document.getElementById('description');
+    const categorySelect = document.getElementById('product_category_id');
+    const aiStatus = document.getElementById('ai-status');
+    const aiRegenerate = document.getElementById('ai-regenerate');
+
+    let lastFile = null;
+
+    function setStatus(text) {
+        aiStatus.textContent = text;
+        aiStatus.classList.remove('hidden');
+    }
+
+    async function requestSuggestion(file) {
+        setStatus('✨ Generating title & description from your photo…');
+        aiRegenerate.disabled = true;
+
+        const formData = new FormData();
+        formData.append('image', file);
+        if (categorySelect.value) {
+            formData.append('product_category_id', categorySelect.value);
+        }
+
+        try {
+            const response = await fetch('{{ route('vendor.products.suggest-description') }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    Accept: 'application/json',
+                },
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error('request failed');
+            }
+
+            const data = await response.json();
+            nameInput.value = data.name;
+            descriptionInput.value = data.description;
+            setStatus('✨ Suggested by AI from your photo — feel free to edit before saving.');
+        } catch (error) {
+            setStatus('Could not generate a suggestion for this photo. You can fill this in yourself.');
+        } finally {
+            aiRegenerate.disabled = false;
+        }
+    }
+
+    // Editing an existing product already has title/description, so we never
+    // auto-overwrite here — just surface the button once a new photo is picked.
+    imagesInput.addEventListener('change', function () {
+        if (imagesInput.files.length === 0) {
+            return;
+        }
+
+        lastFile = imagesInput.files[0];
+        aiRegenerate.classList.remove('hidden');
+    });
+
+    aiRegenerate.addEventListener('click', function () {
+        if (lastFile) {
+            requestSuggestion(lastFile);
+        }
+    });
+})();
+</script>
+@endpush

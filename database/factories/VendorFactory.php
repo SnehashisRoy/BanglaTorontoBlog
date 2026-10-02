@@ -28,14 +28,14 @@ class VendorFactory extends Factory
             'address' => fake()->address(),
             'city' => fake()->city(),
             'website' => fake()->optional()->url(),
-            'is_active' => true,
+            'status' => Vendor::STATUS_APPROVED,
         ];
     }
 
-    public function inactive(): static
+    public function pending(): static
     {
         return $this->state(fn (array $attributes) => [
-            'is_active' => false,
+            'status' => Vendor::STATUS_PENDING,
         ]);
     }
 }

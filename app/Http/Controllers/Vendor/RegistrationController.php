@@ -28,6 +28,7 @@ class RegistrationController extends Controller
 
         $this->vendors->createForUser($request->user(), $data);
 
-        return redirect()->route('vendor.dashboard')->with('success', 'Your shop is live!');
+        return redirect()->route('vendor.dashboard')
+            ->with('success', 'Your shop request has been submitted! An admin will review it shortly — you can set up your products in the meantime.');
     }
 }
