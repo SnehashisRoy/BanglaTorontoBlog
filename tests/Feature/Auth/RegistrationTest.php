@@ -36,4 +36,30 @@ class RegistrationTest extends TestCase
         $this->assertAuthenticated();
         $response->assertRedirect(route('dashboard', absolute: false));
     }
+
+    public function test_a_six_character_password_is_accepted(): void
+    {
+        $response = $this->post(route('register.store'), [
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+            'password' => '123456',
+            'password_confirmation' => '123456',
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertSessionDoesntHaveErrors('password');
+    }
+
+    public function test_a_password_shorter_than_six_characters_is_rejected(): void
+    {
+        $response = $this->post(route('register.store'), [
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+            'password' => '12345',
+            'password_confirmation' => '12345',
+        ]);
+
+        $this->assertGuest();
+        $response->assertSessionHasErrors('password');
+    }
 }

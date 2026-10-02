@@ -2,7 +2,6 @@
 
 namespace App\Actions\Fortify;
 
-use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
@@ -10,10 +9,14 @@ use Laravel\Fortify\Contracts\CreatesNewUsers;
 
 class CreateNewUser implements CreatesNewUsers
 {
-    use PasswordValidationRules, ProfileValidationRules;
+    use ProfileValidationRules;
 
     /**
      * Validate and create a newly registered user.
+     *
+     * Registration uses its own, shorter minimum (6) rather than the
+     * app-wide Password::default() used for login/reset/settings — intentionally
+     * scoped to sign-up only.
      *
      * @param  array<string, string>  $input
      */
@@ -21,7 +24,7 @@ class CreateNewUser implements CreatesNewUsers
     {
         Validator::make($input, [
             ...$this->profileRules(),
-            'password' => $this->passwordRules(),
+            'password' => ['required', 'string', 'min:6', 'confirmed'],
         ])->validate();
 
         return User::create([
