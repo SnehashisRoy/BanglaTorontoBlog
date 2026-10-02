@@ -2,14 +2,14 @@
 
 namespace App\Http\Responses;
 
-use App\Support\PostLoginRedirect;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Laravel\Fortify\Contracts\TwoFactorLoginResponse as TwoFactorLoginResponseContract;
+use Laravel\Fortify\Contracts\LogoutResponse as LogoutResponseContract;
+use Laravel\Fortify\Fortify;
 use Symfony\Component\HttpFoundation\Response;
 
-class TwoFactorLoginResponse implements TwoFactorLoginResponseContract
+class LogoutResponse implements LogoutResponseContract
 {
     /**
      * Create an HTTP response that represents the object.
@@ -23,9 +23,12 @@ class TwoFactorLoginResponse implements TwoFactorLoginResponseContract
             return new JsonResponse('', 204);
         }
 
-        $url = redirect()->intended(PostLoginRedirect::for($request->user()))->getTargetUrl();
+        $url = Fortify::redirects('logout', '/');
 
-        // See App\Http\Responses\LoginResponse for why this isn't a plain redirect.
+        // The in-app "Log out" button lives on Inertia pages (dashboard,
+        // settings) and posts via Inertia, but the destination (home) is a
+        // plain Blade view. See App\Http\Responses\LoginResponse for why this
+        // isn't a plain redirect.
         return Inertia::location($url);
     }
 }

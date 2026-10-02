@@ -4,6 +4,7 @@ namespace App\Http\Responses;
 
 use App\Support\PostLoginRedirect;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -21,6 +22,13 @@ class LoginResponse implements LoginResponseContract
             return response()->json(['two_factor' => false]);
         }
 
-        return redirect()->intended(PostLoginRedirect::for($request->user()));
+        $url = redirect()->intended(PostLoginRedirect::for($request->user()))->getTargetUrl();
+
+        // The login form is an Inertia page, but the destination (admin/vendor
+        // dashboards, the public home page) is a plain Blade view. Inertia::location()
+        // forces a real browser visit on Inertia requests instead of an SPA
+        // transition — otherwise Inertia shows its raw-response error modal
+        // when it can't render a non-Inertia response as a page.
+        return Inertia::location($url);
     }
 }
