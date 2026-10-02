@@ -48,6 +48,8 @@
                             @csrf
                             <button type="submit" class="hover:text-gray-900">{{ __('Log Out') }}</button>
                         </form>
+                    @else
+                        <a href="{{ route('vendor.intent', 'register') }}" class="hover:text-gray-900">{{ __('Sell With Us') }}</a>
                     @endauth
 
                     @if($showLocaleSwitch ?? false)
@@ -107,6 +109,8 @@
                         @csrf
                         <button type="submit" class="block py-1.5 hover:text-gray-900">{{ __('Log Out') }}</button>
                     </form>
+                @else
+                    <a href="{{ route('vendor.intent', 'register') }}" class="block py-1.5 hover:text-gray-900">{{ __('Sell With Us') }}</a>
                 @endauth
 
                 @if($showLocaleSwitch ?? false)
@@ -161,12 +165,12 @@
                     @endif
                 @else
                     <div class="shrink-0 flex items-center gap-2">
-                        <a href="{{ route('register') }}"
+                        <a href="{{ route('vendor.intent', 'register') }}"
                            class="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-transform hover:-translate-y-0.5"
                            style="background: #2ecc71; box-shadow: 0 8px 24px rgba(46,204,113,0.35);">
                             {{ __('Register') }}
                         </a>
-                        <a href="{{ route('login') }}"
+                        <a href="{{ route('vendor.intent', 'login') }}"
                            class="inline-flex items-center gap-2 rounded-lg border border-white/40 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10">
                             {{ __('Log In') }}
                         </a>

@@ -81,4 +81,58 @@ class RegistrationTest extends TestCase
 
         $response->assertForbidden();
     }
+
+    public function test_sell_intent_sends_a_guest_to_register_and_remembers_where_to_land(): void
+    {
+        $response = $this->get(route('vendor.intent', 'register'));
+
+        $response->assertRedirect(route('register'));
+        $response->assertSessionHas('url.intended', route('vendor.register'));
+    }
+
+    public function test_sell_intent_sends_a_guest_to_login_and_remembers_where_to_land(): void
+    {
+        $response = $this->get(route('vendor.intent', 'login'));
+
+        $response->assertRedirect(route('login'));
+        $response->assertSessionHas('url.intended', route('vendor.register'));
+    }
+
+    public function test_sell_intent_sends_an_already_logged_in_user_straight_to_vendor_register(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('vendor.intent', 'register'));
+
+        $response->assertRedirect(route('vendor.register'));
+    }
+
+    public function test_registering_via_the_sell_intent_link_lands_on_the_vendor_registration_form(): void
+    {
+        $this->get(route('vendor.intent', 'register'));
+
+        $response = $this->post(route('register.store'), [
+            'name' => 'Future Vendor',
+            'email' => 'future-vendor@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect(route('vendor.register'));
+    }
+
+    public function test_logging_in_via_the_sell_intent_link_lands_on_the_vendor_registration_form(): void
+    {
+        $user = User::factory()->create();
+        $this->get(route('vendor.intent', 'login'));
+
+        $response = $this->post(route('login.store'), [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect(route('vendor.register'));
+    }
 }

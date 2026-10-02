@@ -27,6 +27,12 @@ Route::prefix('shops')->name('shops.')->group(function () {
     Route::get('/{vendor}/{product}', [ProductController::class, 'show'])->name('products.show');
 });
 
+// "I want to sell" entry point for guests — remembers vendor-registration
+// intent across the login/register detour, then sends them straight back here.
+Route::get('/sell/{via}', [VendorRegistrationController::class, 'intent'])
+    ->whereIn('via', ['register', 'login'])
+    ->name('vendor.intent');
+
 // Become a vendor — any logged-in user
 Route::middleware('auth')->group(function () {
     Route::get('/vendor/register', [VendorRegistrationController::class, 'create'])->name('vendor.register');
