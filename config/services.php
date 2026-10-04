@@ -45,6 +45,9 @@ return [
 
     'cj_dropshipping' => [
         'base_url' => env('CJ_DROPSHIPPING_BASE_URL', 'https://developers.cjdropshipping.com/api2.0/v1'),
+        // CJ always quotes prices in USD (no currency param on their API).
+        // Used only if the live rate lookup fails and nothing is cached yet.
+        'usd_to_cad_fallback_rate' => (float) env('CJ_USD_TO_CAD_FALLBACK_RATE', 1.38),
     ],
 
 ];

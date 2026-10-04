@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Vendor;
 use App\Models\VendorCjCredential;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -14,6 +15,16 @@ use Tests\TestCase;
 class CjImportTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Neutral FX rate so existing USD-based price assertions don't need
+        // to account for currency conversion — that's covered separately in
+        // CjCurrencyConverterTest. Seeding the cache avoids a real HTTP call.
+        Cache::put('cj_usd_to_cad_rate', 1.0, now()->addDay());
+    }
 
     private function connectedVendor(): Vendor
     {
@@ -177,6 +188,42 @@ class CjImportTest extends TestCase
         ]);
 
         $this->assertDatabaseCount('products', 0);
+    }
+
+    /**
+     * Confirmed against a real CJ account: CJ can return `inventories: null`
+     * for a variant whose product listing clearly has stock. That must not
+     * block the import — only a confirmed zero should.
+     */
+    public function test_a_variant_with_unknown_stock_can_still_be_imported(): void
+    {
+        Storage::fake('public');
+        $vendor = $this->connectedVendor();
+
+        Http::fake([
+            '*/product/query*' => Http::response([
+                'result' => true,
+                'data' => [
+                    'pid' => '1001',
+                    'productNameEn' => 'Embroidered Cotton Saree',
+                    'sellPrice' => '8.40',
+                    'variants' => [
+                        [
+                            'vid' => 'v-red',
+                            'variantKey' => 'Red',
+                            'variantSellPrice' => '8.40',
+                            'inventories' => null,
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $this->actingAs($vendor->user)->post(route('vendor.cj.import.store', '1001'), [
+            'variant_ids' => ['v-red'],
+        ]);
+
+        $this->assertDatabaseCount('products', 1);
     }
 
     public function test_a_vendor_cannot_import_without_cj_connected(): void

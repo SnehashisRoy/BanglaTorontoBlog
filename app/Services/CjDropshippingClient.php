@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Dto\CjProductDetail;
 use App\Dto\CjProductSummary;
+use App\Dto\CjSearchResult;
 use App\Dto\CjTokenPair;
 use App\Models\VendorCjCredential;
 use Illuminate\Http\Client\PendingRequest;
@@ -11,14 +12,16 @@ use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
 /**
- * Thin wrapper over CJ Dropshipping's Open API (developers.cjdropshipping.com),
- * verified against their published docs on 2026-10-03:
+ * Thin wrapper over CJ Dropshipping's Open API (developers.cjdropshipping.com).
+ * Initially built against their published docs (2026-10-03):
  *   - auth.html            → getAccessToken / refreshAccessToken
  *   - start/token.html     → CJ-Access-Token header on authenticated calls
  *   - api2/api/product.html → product/listV2, product/query
  *
- * Not verified against a live CJ account (no credentials available in this
- * environment) — only against the documented contract and Http::fake() in tests.
+ * Verified against a real connected account on 2026-10-04, which surfaced two
+ * places the real API doesn't match CJ's own docs — see search()'s nesting
+ * note and CjVariant's stock-unknown note. Order placement is still
+ * unverified (out of scope — this build never calls CJ's order endpoints).
  */
 class CjDropshippingClient
 {
@@ -72,18 +75,35 @@ class CjDropshippingClient
     }
 
     /**
-     * @param  array<string, mixed>  $filters  keyWord, categoryId, startSellPrice, endSellPrice, countryCode, sort, orderBy
-     * @return array<CjProductSummary>
+     * CJ's own documented maximum for `size` — requesting more than this
+     * returns an error, so it's clamped here rather than left to fail remotely.
      */
-    public function search(VendorCjCredential $credential, array $filters = [], int $page = 1, int $size = 20): array
+    private const MAX_PAGE_SIZE = 100;
+
+    /**
+     * @param  array<string, mixed>  $filters  keyWord, categoryId, startSellPrice, endSellPrice, countryCode, sort, orderBy
+     */
+    public function search(VendorCjCredential $credential, array $filters = [], int $page = 1, int $size = 50): CjSearchResult
     {
+        $size = min($size, self::MAX_PAGE_SIZE);
+
         $response = $this->authenticatedRequest($credential)
             ->get('/product/listV2', [...$filters, 'page' => $page, 'size' => $size]);
 
         $data = $this->unwrap($response);
-        $items = $data['list'] ?? $data['content'] ?? $data;
 
-        return array_map(fn (array $item) => CjProductSummary::fromArray($item), $items);
+        // Confirmed against a real CJ response (2026-10-04): results are
+        // nested as data.content[0].productList, not data.list as CJ's own
+        // docs describe. The other fallbacks are kept as a safety net in
+        // case this shape differs by search params or changes later.
+        $items = $data['content'][0]['productList']
+            ?? $data['list']
+            ?? $data['content']
+            ?? $data;
+
+        $summaries = array_map(fn (array $item) => CjProductSummary::fromArray($item), $items);
+
+        return CjSearchResult::fromArray($data, $summaries, $page);
     }
 
     public function productDetail(VendorCjCredential $credential, string $pid, ?string $countryCode = null): CjProductDetail

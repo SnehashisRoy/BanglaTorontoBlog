@@ -41,7 +41,7 @@
                     @foreach($product->variants as $variant)
                         @php
                             $markup = (float) ($vendor->cj_markup_percent ?? 0);
-                            $yourPrice = round($variant->sellPrice * (1 + $markup / 100), 2);
+                            $yourPrice = $currency->sellingPrice($variant->sellPrice, $markup);
                         @endphp
                         <label class="flex items-center gap-3 rounded-lg border border-gray-200 p-3 {{ $variant->inStock() ? 'cursor-pointer hover:border-gray-300' : 'opacity-50' }}">
                             <input type="checkbox" name="variant_ids[]" value="{{ $variant->id }}"
@@ -50,15 +50,21 @@
                             <div class="flex-1">
                                 <p class="text-sm font-medium text-gray-900">{{ $variant->key ?: $variant->name }}</p>
                                 <p class="text-xs text-gray-500">
-                                    CJ cost: ${{ number_format($variant->sellPrice, 2) }}
-                                    · Your price: ${{ number_format($yourPrice, 2) }}
+                                    CJ cost: ${{ number_format($variant->sellPrice, 2) }} USD (excl. shipping)
+                                    · Your price: CA${{ number_format($yourPrice, 2) }}
                                     @if($variant->warehouseCountry)
                                         · Ships from: {{ $variant->warehouseCountry }}
                                     @endif
                                 </p>
                             </div>
-                            <span class="text-xs font-medium {{ $variant->inStock() ? 'text-green-600' : 'text-gray-400' }}">
-                                {{ $variant->inStock() ? 'In stock' : 'Out of stock' }}
+                            <span class="text-xs font-medium {{ $variant->inStock() ? ($variant->stockKnown() ? 'text-green-600' : 'text-gray-400') : 'text-gray-400' }}">
+                                @if(! $variant->stockKnown())
+                                    Stock unknown
+                                @elseif($variant->inStock())
+                                    In stock
+                                @else
+                                    Out of stock
+                                @endif
                             </span>
                         </label>
                     @endforeach

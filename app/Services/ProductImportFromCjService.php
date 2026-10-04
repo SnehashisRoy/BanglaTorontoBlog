@@ -19,12 +19,15 @@ use Illuminate\Support\Str;
  */
 class ProductImportFromCjService
 {
-    public function __construct(private readonly ProductRepository $products) {}
+    public function __construct(
+        private readonly ProductRepository $products,
+        private readonly CjCurrencyConverter $currency,
+    ) {}
 
     public function importVariant(Vendor $vendor, CjProductDetail $product, CjVariant $variant): Product
     {
         $markup = (float) ($vendor->cj_markup_percent ?? 0);
-        $price = round($variant->sellPrice * (1 + $markup / 100), 2);
+        $price = $this->currency->sellingPrice($variant->sellPrice, $markup);
         $name = $variant->key !== '' ? "{$product->name} — {$variant->key}" : $product->name;
 
         $newProduct = $this->products->createForVendor($vendor, [

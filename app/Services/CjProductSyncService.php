@@ -12,6 +12,8 @@ use App\Models\Vendor;
  */
 class CjProductSyncService
 {
+    public function __construct(private readonly CjCurrencyConverter $currency) {}
+
     /**
      * Recompute every CJ-linked product's price for this vendor from its
      * last-known CJ cost and the vendor's *current* markup — used right after
@@ -52,10 +54,10 @@ class CjProductSyncService
     private function applyMarkup(Product $product, Vendor $vendor): void
     {
         $markup = (float) ($vendor->cj_markup_percent ?? 0);
-        $cost = (float) $product->cjLink->cj_cost_price;
+        $costUsd = (float) $product->cjLink->cj_cost_price;
 
         $product->update([
-            'price' => round($cost * (1 + $markup / 100), 2),
+            'price' => $this->currency->sellingPrice($costUsd, $markup),
         ]);
     }
 }

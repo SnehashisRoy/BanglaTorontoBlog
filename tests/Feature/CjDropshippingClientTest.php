@@ -115,6 +115,11 @@ class CjDropshippingClientTest extends TestCase
         Http::assertSent(fn ($request) => $request['refreshToken'] === 'old-refresh');
     }
 
+    /**
+     * Shape confirmed against a real CJ account on 2026-10-04 — CJ's own docs
+     * describe a flat data.list, but the live API actually nests results as
+     * data.content[0].productList.
+     */
     public function test_search_sends_the_access_token_header_and_maps_results(): void
     {
         $credential = VendorCjCredential::factory()->create([
@@ -126,14 +131,19 @@ class CjDropshippingClientTest extends TestCase
             '*/product/listV2*' => Http::response([
                 'result' => true,
                 'data' => [
-                    'list' => [
+                    'content' => [
                         [
-                            'id' => '1001',
-                            'nameEn' => 'Embroidered Cotton Saree',
-                            'bigImage' => 'https://cj.example/img1.jpg',
-                            'sellPrice' => '8.40',
-                            'categoryId' => 'cat-1',
-                            'warehouseInventoryNum' => 50,
+                            'productList' => [
+                                [
+                                    'id' => '1001',
+                                    'nameEn' => 'Embroidered Cotton Saree',
+                                    'bigImage' => 'https://cj.example/img1.jpg',
+                                    'sellPrice' => '8.40',
+                                    'categoryId' => 'cat-1',
+                                    'warehouseInventoryNum' => 50,
+                                ],
+                            ],
+                            'keyWord' => 'saree',
                         ],
                     ],
                 ],
@@ -142,12 +152,67 @@ class CjDropshippingClientTest extends TestCase
 
         $results = $this->client()->search($credential, ['keyWord' => 'saree']);
 
-        $this->assertCount(1, $results);
-        $this->assertSame('1001', $results[0]->id);
-        $this->assertSame('Embroidered Cotton Saree', $results[0]->name);
-        $this->assertSame(8.40, $results[0]->sellPrice);
+        $this->assertCount(1, $results->items);
+        $this->assertSame('1001', $results->items[0]->id);
+        $this->assertSame('Embroidered Cotton Saree', $results->items[0]->name);
+        $this->assertSame(8.40, $results->items[0]->sellPrice);
 
         Http::assertSent(fn ($request) => $request->hasHeader('CJ-Access-Token', 'token-abc'));
+    }
+
+    public function test_search_falls_back_to_a_flat_list_shape_if_cj_ever_returns_one(): void
+    {
+        $credential = VendorCjCredential::factory()->create([
+            'access_token' => 'token-abc',
+            'access_token_expires_at' => now()->addDays(100),
+        ]);
+
+        Http::fake([
+            '*/product/listV2*' => Http::response([
+                'result' => true,
+                'data' => [
+                    'list' => [
+                        ['id' => '2002', 'nameEn' => 'Fallback Shape Item', 'sellPrice' => '5.00'],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $results = $this->client()->search($credential, ['keyWord' => 'anything']);
+
+        $this->assertCount(1, $results->items);
+        $this->assertSame('2002', $results->items[0]->id);
+    }
+
+    public function test_search_exposes_pagination_metadata_and_clamps_page_size(): void
+    {
+        $credential = VendorCjCredential::factory()->create([
+            'access_token' => 'token-abc',
+            'access_token_expires_at' => now()->addDays(100),
+        ]);
+
+        Http::fake([
+            '*/product/listV2*' => Http::response([
+                'result' => true,
+                'data' => [
+                    'pageNumber' => 2,
+                    'totalPages' => 61,
+                    'totalRecords' => 1216,
+                    'content' => [['productList' => []]],
+                ],
+            ], 200),
+        ]);
+
+        $results = $this->client()->search($credential, ['keyWord' => 'jewelry'], page: 2, size: 500);
+
+        $this->assertSame(2, $results->page);
+        $this->assertSame(61, $results->totalPages);
+        $this->assertSame(1216, $results->totalRecords);
+        $this->assertTrue($results->hasPrevious());
+        $this->assertTrue($results->hasNext());
+
+        // size was clamped to CJ's documented max (100), not sent as 500.
+        Http::assertSent(fn ($request) => $request['size'] === 100 && $request['page'] === 2);
     }
 
     public function test_product_detail_maps_variants_and_picks_an_in_stock_warehouse(): void
@@ -203,5 +268,42 @@ class CjDropshippingClientTest extends TestCase
 
         $blue = $detail->variants[1];
         $this->assertFalse($blue->inStock());
+    }
+
+    /**
+     * Confirmed against a real CJ account (2026-10-04): `inventories` can
+     * come back null even for a product whose search listing reports stock.
+     * That must not be treated as "confirmed zero" — only an explicit zero
+     * should block import.
+     */
+    public function test_a_variant_with_null_inventories_is_treated_as_stock_unknown_not_out_of_stock(): void
+    {
+        $credential = VendorCjCredential::factory()->create([
+            'access_token' => 'token-abc',
+            'access_token_expires_at' => now()->addDays(100),
+        ]);
+
+        Http::fake([
+            '*/product/query*' => Http::response([
+                'result' => true,
+                'data' => [
+                    'pid' => '1001',
+                    'variants' => [
+                        [
+                            'vid' => 'v-red',
+                            'variantKey' => 'Red',
+                            'variantSellPrice' => 16.70,
+                            'inventories' => null,
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $variant = $this->client()->productDetail($credential, '1001')->variants[0];
+
+        $this->assertNull($variant->totalInventory);
+        $this->assertFalse($variant->stockKnown());
+        $this->assertTrue($variant->inStock());
     }
 }

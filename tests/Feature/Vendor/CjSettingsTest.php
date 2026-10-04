@@ -7,12 +7,21 @@ use App\Models\User;
 use App\Models\Vendor;
 use App\Models\VendorCjCredential;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class CjSettingsTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Neutral FX rate — see CjImportTest for why this avoids a real HTTP call.
+        Cache::put('cj_usd_to_cad_rate', 1.0, now()->addDay());
+    }
 
     public function test_a_vendor_without_cj_enabled_cannot_view_the_settings_page(): void
     {

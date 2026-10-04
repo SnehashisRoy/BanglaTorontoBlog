@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Vendor;
 
 use App\Http\Controllers\Controller;
 use App\Services\CjApiException;
+use App\Services\CjCurrencyConverter;
 use App\Services\CjDropshippingClient;
 use App\Services\ProductImportFromCjService;
 use Illuminate\Http\RedirectResponse;
@@ -15,6 +16,7 @@ class CjImportController extends Controller
     public function __construct(
         private readonly CjDropshippingClient $client,
         private readonly ProductImportFromCjService $importer,
+        private readonly CjCurrencyConverter $currency,
     ) {}
 
     public function search(Request $request): View
@@ -22,21 +24,26 @@ class CjImportController extends Controller
         $vendor = $request->user()->vendor;
         abort_unless($vendor->hasConnectedCj(), 403);
 
-        $results = [];
+        $results = null;
         $error = null;
 
         if ($request->filled('keyword')) {
             try {
-                $results = $this->client->search($vendor->cjCredential, [
-                    'keyWord' => $request->string('keyword')->toString(),
-                ]);
+                $results = $this->client->search(
+                    $vendor->cjCredential,
+                    ['keyWord' => $request->string('keyword')->toString()],
+                    page: max(1, $request->integer('page', 1)),
+                );
             } catch (CjApiException $e) {
                 report($e);
                 $error = 'Could not search CJ Dropshipping right now. Please try again shortly.';
             }
         }
 
-        return view('vendor.cj.import.search', compact('vendor', 'results', 'error'));
+        return view('vendor.cj.import.search', [
+            ...compact('vendor', 'results', 'error'),
+            'currency' => $this->currency,
+        ]);
     }
 
     public function show(Request $request, string $pid): View
@@ -51,7 +58,10 @@ class CjImportController extends Controller
             abort(502, 'Could not load this product from CJ Dropshipping right now.');
         }
 
-        return view('vendor.cj.import.show', compact('vendor', 'product'));
+        return view('vendor.cj.import.show', [
+            ...compact('vendor', 'product'),
+            'currency' => $this->currency,
+        ]);
     }
 
     public function store(Request $request, string $pid): RedirectResponse

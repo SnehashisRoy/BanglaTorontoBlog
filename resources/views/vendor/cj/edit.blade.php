@@ -70,8 +70,10 @@
                     <span class="text-sm text-gray-500">%</span>
                 </div>
                 <p class="mt-1 text-xs text-gray-400">
-                    Your selling price = CJ's cost × (1 + markup). Applies to every product you import, and
-                    repricing existing ones happens immediately when you save — not just on the next daily sync.
+                    Your selling price (CAD) = CJ's cost (USD, converted to CAD at the current exchange rate)
+                    × (1 + markup). Applies to every product you import, and repricing existing ones happens
+                    immediately when you save — not just on the next daily sync. Note: CJ's cost does not
+                    include shipping — factor that into your markup.
                 </p>
             </div>
 

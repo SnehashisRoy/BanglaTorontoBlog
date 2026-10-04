@@ -493,8 +493,91 @@ cj_product_links                      -- ties a local Product back to its CJ sou
    same pre-existing generics-annotation style gap already present throughout
    the rest of the codebase).
 
-**Not verified**: no real CJ Dropshipping account/API key was available in this
-environment, so nothing here has been exercised against CJ's actual servers —
-only against their documented contract (verified via their published docs) and
-`Http::fake()`. The first real test should be one vendor connecting a real CJ
-account and importing one product, before enabling this for anyone else.
+## Verified live against a real CJ account (2026-10-04) — two real bugs found and fixed
+
+A vendor (Dhaka Bazaar) connected a real CJ Dropshipping account and hit a real
+error on the first search. Investigating against the live account (not just
+docs) surfaced two gaps between what CJ's documentation says and what the API
+actually returns — both are exactly the kind of thing `Http::fake()` tests
+can't catch, since the fakes were built from the (incorrect) documented shape:
+
+1. **Search results are nested one level deeper than documented.** CJ's docs
+   describe `data.list[]`; the real response is `data.content[0].productList[]`
+   — `content[0]` is a wrapper object (also carrying `relatedCategoryList`,
+   `keyWord`, `keyWordOld`), not a product. The old code treated `data.content`
+   itself as the product array, so it tried to read `.id` off that wrapper and
+   crashed with "Undefined array key 'id'". Fixed in `CjDropshippingClient::search()`
+   with the real path as the primary case and the documented shapes kept as
+   fallbacks. All three DTOs (`CjProductSummary`, `CjProductDetail`, `CjVariant`)
+   were also hardened to try a few plausible alternate key names and log a
+   warning instead of throwing when a field is genuinely missing — one
+   malformed row should never take down the whole results page again.
+
+2. **`product/query`'s `inventories` can be `null` for a variant whose product
+   listing clearly has stock** (confirmed: a real product reporting
+   `warehouseInventoryNum: 40` in search had every variant come back
+   `"inventories":null` in the detail call — with or without `countryCode`
+   passed). Three inventory-specific endpoints CJ's docs suggested as the "real"
+   stock source (`inventoryQuery`, `inventoryBySku`, `inventoryByProductId`) all
+   returned `"Interface not found"` when tried directly — so those paths were
+   never real; no further attempt was made to find a true dedicated stock
+   endpoint. Given that, `CjVariant::inStock()` was changed to treat `null`
+   (unknown) as *importable*, and only a confirmed explicit zero as blocking.
+   This matters in both places stock is checked: the import variant-picker (was
+   wrongly marking everything "Out of stock" and disabling every checkbox) and
+   the daily `cj:sync-products` command (was at risk of wrongly auto-drafting
+   *live, published* products on a resync purely because CJ omitted inventory
+   data, not because anything actually sold out).
+
+After both fixes: real search → real product detail/variant picker (now showing
+honest "Stock unknown" instead of a false "Out of stock") → real import all
+confirmed working end-to-end against the live account, including the image
+actually downloading from CJ's CDN to local storage. The one test product
+created during that verification was deleted afterward; the vendor's real CJ
+connection was left untouched.
+
+**Still not independently verified**: order placement (out of scope — this
+build never calls CJ's order endpoints), behavior for other product types/
+categories beyond the one tested, and whether the `content[0].productList`
+shape holds for every `listV2` filter combination (kept as the primary case
+with the documented shapes as fallback specifically because of that
+uncertainty).
+
+## Follow-up: result count/pagination was silently capped, and pricing was USD-only (2026-10-04)
+
+Two more things found and fixed after the initial build, both from direct
+user testing against the live account:
+
+**Only 20 results ever showed, with no pagination.** `search()` defaulted to
+`size=20` and the import screen never exposed `page` at all — confirmed live:
+"jewelry" has 1,216 real matches on CJ, all but the first 20 were invisible.
+Fixed: default size raised to 50 (CJ's documented max of 100 is enforced as a
+clamp, not a default), `CjDropshippingClient::search()` now returns a
+`CjSearchResult` (items + `page`/`totalPages`/`totalRecords` from CJ's own
+response) instead of a bare array, and the search page shows real Previous/Next
+links plus a result count. Verified live: page 1 and page 2 of a real "jewelry"
+search both render correctly with working navigation.
+
+**Prices were USD, CJ's `sellPrice` excludes shipping.** Both confirmed
+directly from CJ's docs (not assumed): no `currency` parameter exists on
+`listV2`/`query` — CJ is USD-only — and shipping is calculated by a wholly
+separate `logistic/freightCalculate` endpoint (needs destination country +
+variant + quantity), never folded into `sellPrice`. Added `CjCurrencyConverter`:
+fetches the live USD→CAD rate from Frankfurter (free, ECB-backed, no API key),
+caches it for a day, falls back to a configured rate
+(`CJ_USD_TO_CAD_FALLBACK_RATE`) if the lookup ever fails. `cj_cost_price` still
+stores the *raw USD* value from CJ (unconverted, for data fidelity) — conversion
+happens at calculation time via `CjCurrencyConverter::sellingPrice()`, the one
+place the full formula (USD → CAD → + markup) now lives, used identically by
+the import flow, the daily resync, and both the search and variant-picker
+previews. Every vendor-facing price now reads "CJ cost: $X USD (excl.
+shipping)" / "Your price: CA$Y" so the currency and the shipping gap are both
+explicit, not implied. Verified live: real rate fetched (1.424 at the time of
+testing) and applied correctly end-to-end on a real search.
+
+**Not addressed — explicitly out of scope for now**: shipping cost is still
+not shown or factored into price anywhere. Integrating it would mean calling
+`logistic/freightCalculate` per variant, which needs a destination country —
+nothing in this app collects one today (no checkout, no customer address; the
+vendor would need a "default ship-to country" setting of their own). Flagged
+back to the user as a decision point, not built speculatively.

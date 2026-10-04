@@ -7,12 +7,21 @@ use App\Models\Vendor;
 use App\Models\VendorCjCredential;
 use Illuminate\Console\Command;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class SyncCjProductsTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Neutral FX rate — see CjImportTest for why this avoids a real HTTP call.
+        Cache::put('cj_usd_to_cad_rate', 1.0, now()->addDay());
+    }
 
     private function connectedVendor(float $markup = 35): Vendor
     {
@@ -89,6 +98,44 @@ class SyncCjProductsTest extends TestCase
         $this->artisan('cj:sync-products')->assertExitCode(Command::SUCCESS);
 
         $this->assertDatabaseHas('products', ['id' => $product->id, 'status' => 'draft']);
+    }
+
+    /**
+     * Confirmed against a real CJ account: CJ can return `inventories: null`
+     * for a variant even when it's genuinely available. The sync must not
+     * treat that as "out of stock" and wrongly un-publish a live product.
+     */
+    public function test_it_does_not_auto_draft_when_cj_reports_unknown_stock(): void
+    {
+        $vendor = $this->connectedVendor();
+        $product = Product::factory()->for($vendor)->create(['status' => 'published']);
+        $product->cjLink()->create([
+            'cj_product_id' => '1001',
+            'cj_variant_id' => 'v-red',
+            'cj_cost_price' => 8.40,
+            'cj_last_synced_at' => now()->subDay(),
+        ]);
+
+        Http::fake([
+            '*/product/query*' => Http::response([
+                'result' => true,
+                'data' => [
+                    'pid' => '1001',
+                    'variants' => [
+                        [
+                            'vid' => 'v-red',
+                            'variantKey' => 'Red',
+                            'variantSellPrice' => '8.40',
+                            'inventories' => null,
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $this->artisan('cj:sync-products')->assertExitCode(Command::SUCCESS);
+
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'status' => 'published']);
     }
 
     public function test_it_batches_variants_of_the_same_cj_product_into_one_api_call(): void
