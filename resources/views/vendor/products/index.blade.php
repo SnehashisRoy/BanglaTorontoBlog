@@ -4,12 +4,20 @@
 
 @section('content')
 
-    <div class="mb-6 flex items-center justify-between">
+    <div class="mb-6 flex items-center justify-between gap-3">
         <h1 class="text-xl sm:text-2xl font-bold text-gray-900">My Products</h1>
-        <a href="{{ route('vendor.products.create') }}"
-           class="inline-flex items-center gap-1.5 rounded-lg bg-[#27ae60] px-3.5 py-1.5 text-sm font-medium text-white hover:bg-[#1a7a44] transition-colors">
-            + New Product
-        </a>
+        <div class="flex items-center gap-2">
+            @if(auth()->user()->vendor->hasConnectedCj())
+                <a href="{{ route('vendor.cj.import.search') }}"
+                   class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3.5 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                    📦 Import from CJ
+                </a>
+            @endif
+            <a href="{{ route('vendor.products.create') }}"
+               class="inline-flex items-center gap-1.5 rounded-lg bg-[#27ae60] px-3.5 py-1.5 text-sm font-medium text-white hover:bg-[#1a7a44] transition-colors">
+                + New Product
+            </a>
+        </div>
     </div>
 
     @if($products->isEmpty())
@@ -22,7 +30,12 @@
             @foreach($products as $product)
                 <div class="bg-white rounded-xl border border-gray-200 p-4">
                     <div class="flex items-start justify-between gap-3">
-                        <p class="font-medium text-gray-900 leading-snug">{{ $product->name }}</p>
+                        <p class="font-medium text-gray-900 leading-snug">
+                            {{ $product->name }}
+                            @if($product->cjLink)
+                                <span class="ml-1 rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-700 align-middle">CJ</span>
+                            @endif
+                        </p>
                         @if($product->status === 'published')
                             <span class="shrink-0 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">Published</span>
                         @else
@@ -67,7 +80,12 @@
                 <tbody class="divide-y divide-gray-100">
                     @foreach($products as $product)
                         <tr class="hover:bg-gray-50">
-                            <td class="px-5 py-3 font-medium text-gray-900 max-w-xs truncate">{{ $product->name }}</td>
+                            <td class="px-5 py-3 font-medium text-gray-900 max-w-xs truncate">
+                                {{ $product->name }}
+                                @if($product->cjLink)
+                                    <span class="ml-1 rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-700">CJ</span>
+                                @endif
+                            </td>
                             <td class="px-5 py-3 text-gray-600">{{ $product->category->name ?? '—' }}</td>
                             <td class="px-5 py-3 text-gray-600">
                                 {{ $product->price !== null ? '$'.number_format((float) $product->price, 2) : 'Contact for price' }}

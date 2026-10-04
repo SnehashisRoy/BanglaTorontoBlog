@@ -38,4 +38,12 @@ class VendorFactory extends Factory
             'status' => Vendor::STATUS_PENDING,
         ]);
     }
+
+    public function cjEnabled(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'cj_dropshipping_enabled' => true,
+            'cj_markup_percent' => 35.00,
+        ]);
+    }
 }

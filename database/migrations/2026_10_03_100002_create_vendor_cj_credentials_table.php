@@ -1,0 +1,27 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('vendor_cj_credentials', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('vendor_id')->unique()->constrained()->cascadeOnDelete();
+            $table->text('access_token');
+            $table->text('refresh_token');
+            $table->timestamp('access_token_expires_at');
+            $table->timestamp('refresh_token_expires_at');
+            $table->timestamp('connected_at');
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('vendor_cj_credentials');
+    }
+};

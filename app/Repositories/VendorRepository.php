@@ -59,6 +59,20 @@ class VendorRepository
         return $vendor;
     }
 
+    public function setCjDropshippingEnabled(Vendor $vendor, bool $enabled): Vendor
+    {
+        $vendor->update(['cj_dropshipping_enabled' => $enabled]);
+
+        return $vendor;
+    }
+
+    public function setCjMarkupPercent(Vendor $vendor, float $percent): Vendor
+    {
+        $vendor->update(['cj_markup_percent' => $percent]);
+
+        return $vendor;
+    }
+
     public function updateForUser(Vendor $vendor, array $data): Vendor
     {
         $vendor->update([

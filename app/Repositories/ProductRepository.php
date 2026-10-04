@@ -38,7 +38,7 @@ class ProductRepository
 
     public function findPublished(string $vendorSlug, string $productSlug): Product
     {
-        return Product::with(['vendor', 'category', 'images'])
+        return Product::with(['vendor', 'category', 'images', 'cjLink'])
             ->published()
             ->whereHas('vendor', fn ($q) => $q->where('status', Vendor::STATUS_APPROVED)->where('slug', $vendorSlug))
             ->where('slug', $productSlug)
@@ -47,7 +47,7 @@ class ProductRepository
 
     public function forVendor(Vendor $vendor, int $perPage = 15): LengthAwarePaginator
     {
-        return Product::with(['category', 'images'])
+        return Product::with(['category', 'images', 'cjLink'])
             ->where('vendor_id', $vendor->id)
             ->latest()
             ->paginate($perPage);

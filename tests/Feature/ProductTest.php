@@ -44,4 +44,33 @@ class ProductTest extends TestCase
 
         $response->assertNotFound();
     }
+
+    public function test_a_cj_sourced_product_shows_a_shipping_disclosure(): void
+    {
+        $vendor = Vendor::factory()->create();
+        $product = Product::factory()->for($vendor)->create(['status' => 'published']);
+        $product->cjLink()->create([
+            'cj_product_id' => '1001',
+            'cj_warehouse_country' => 'CN',
+            'cj_cost_price' => 10,
+            'cj_last_synced_at' => now(),
+        ]);
+
+        $response = $this->get(route('shops.products.show', ['vendor' => $vendor->slug, 'product' => $product->slug]));
+
+        $response->assertOk();
+        $response->assertSee('Ships from overseas');
+        $response->assertSee('2–4 weeks');
+    }
+
+    public function test_a_regular_product_shows_no_shipping_disclosure(): void
+    {
+        $vendor = Vendor::factory()->create();
+        $product = Product::factory()->for($vendor)->create(['status' => 'published']);
+
+        $response = $this->get(route('shops.products.show', ['vendor' => $vendor->slug, 'product' => $product->slug]));
+
+        $response->assertOk();
+        $response->assertDontSee('Ships from overseas');
+    }
 }

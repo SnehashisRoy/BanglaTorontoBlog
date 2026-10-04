@@ -33,6 +33,12 @@
                        class="px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors {{ request()->routeIs('vendor.shop.*') ? 'bg-gray-100 text-gray-900' : '' }}">
                         {{ __('Shop Profile') }}
                     </a>
+                    @if(auth()->user()->vendor->cj_dropshipping_enabled)
+                        <a href="{{ route('vendor.cj.edit') }}"
+                           class="px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors {{ request()->routeIs('vendor.cj.*') ? 'bg-gray-100 text-gray-900' : '' }}">
+                            {{ __('CJ Dropshipping') }}
+                        </a>
+                    @endif
                     <a href="{{ route('vendor.products.create') }}"
                        class="inline-flex items-center gap-1.5 rounded-lg bg-[#27ae60] px-3.5 py-1.5 text-sm font-medium text-white hover:bg-[#1a7a44] transition-colors">
                         + {{ __('New Product') }}

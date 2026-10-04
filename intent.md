@@ -296,3 +296,205 @@ the home-page/blog-tab split described in the original ask.
 - `deals` table — untouched (already unused).
 - Blog data model (`Post`, `PostTranslation`, `Category`) and admin blog CRUD — untouched.
 - No cart, checkout, or order tables in this phase.
+
+---
+
+# Addendum: CJ Dropshipping Integration
+
+Discussed 2026-10-03. The "admin-run shops, one shared CJ account" direction
+below was **proposed and then explicitly dropped** — kept here crossed out only
+so the reasoning isn't lost, not because it's live. **Current, final direction
+is the individual-vendor-account version in the second half of this addendum.**
+Status as of this edit: plan final, build starting now.
+
+## ~~Dropped: admin-run shops, one shared CJ account~~
+
+~~Admin creates shop records and manages products directly; one CJ account/
+credential shared across every shop, stored like `ANTHROPIC_API_KEY`. Dropped
+because it turns admin into the personal fulfillment desk for every shop, and
+because every shop sharing one CJ account is a single point of failure. Reverted
+back to independent vendor accounts at the user's request.~~
+
+## Final direction: individual vendor accounts, each with their own CJ login
+
+### Decisions locked in
+
+- **Scope: catalog import only.** No cart, no payment, no automated order placed
+  with CJ. Customers still use the existing Buy/Inquire flow (reveals vendor
+  contact info). Fulfillment to CJ, if a sale happens, is done manually by the
+  vendor, outside the app. Nothing here changes that.
+- **Model: each vendor connects their own CJ account.** No shared credential,
+  no single point of failure across shops — if one vendor's CJ account gets
+  rate-limited or flagged, it doesn't touch any other shop.
+- **Enablement: admin flags a vendor as CJ-capable** — a toggle in
+  `Admin → Vendors`, next to Approve/Pending. Only then does that vendor see
+  anything CJ-related in their own dashboard.
+- **Pricing: one shop-wide markup %** per vendor — `vendors.cj_markup_percent`.
+  `price = cj_cost_price × (1 + markup/100)`, recalculated immediately whenever
+  the vendor changes their markup (using each product's last-known cost, no new
+  API call needed), not just on the next daily sync.
+
+### CJ's real API contract (verified via developers.cjdropshipping.com — not guessed)
+
+**Auth** is a self-generated **API key** the vendor gets from their own CJ
+account (not their CJ password — meaningfully better for trust than initially
+assumed). Exact self-service location on CJ's own site wasn't confirmed by the
+docs pages fetched; the connect form will point to CJ's docs rather than assert
+a specific click-path we haven't verified.
+
+```
+POST https://developers.cjdropshipping.com/api2.0/v1/authentication/getAccessToken
+  body: { "apiKey": "..." }
+  → accessToken, accessTokenExpiryDate, refreshToken, refreshTokenExpiryDate,
+    openId, createDate
+  (tokens valid 180 days; rate limit 1 req/sec)
+
+POST https://developers.cjdropshipping.com/api2.0/v1/authentication/refreshAccessToken
+  body: { "refreshToken": "..." }
+  → same token fields
+
+GET https://developers.cjdropshipping.com/api2.0/v1/product/listV2
+  query: keyWord, page, size (max 100), categoryId, startSellPrice, endSellPrice,
+         countryCode, sort (asc/desc), orderBy (0=best match,1=listings,
+         2=price,3=created,4=inventory)
+  → items[]: id, nameEn, sku/spu, bigImage, sellPrice, nowPrice, listedNum,
+             categoryId, warehouseInventoryNum, verifiedWarehouse, customization
+
+GET https://developers.cjdropshipping.com/api2.0/v1/product/query
+  query: pid (or productSku / variantSku), countryCode, features[]
+  → pid, productNameEn, productSku, bigImage/productImageSet, sellPrice,
+    categoryName, description, variants[]:
+      vid, variantNameEn, variantSku, variantKey (e.g. "Black-XXL"),
+      variantSellPrice, inventories[]: { countryCode, totalInventory,
+      cjInventory, factoryInventory, verifiedWarehouse, stock[] }
+```
+
+`sellPrice` is what CJ charges *us* (the vendor) to buy the item — i.e. our
+"cost" for markup purposes, not a suggested retail price. Warehouse/ship-from
+info comes from `inventories[].countryCode`, not a single flat field.
+
+### Data model
+
+```
+vendors
+  + cj_dropshipping_enabled: boolean, default false   -- admin flag
+  + cj_markup_percent: decimal(5,2), nullable          -- vendor's own setting
+
+vendor_cj_credentials                 -- one row per vendor who's connected CJ
+  vendor_id          FK → vendors, unique, cascadeOnDelete
+  access_token         text, encrypted
+  refresh_token          text, encrypted
+  access_token_expires_at  timestamp
+  refresh_token_expires_at  timestamp
+  connected_at                timestamp
+  timestamps
+  -- the raw apiKey the vendor enters is used once to call getAccessToken,
+  -- then discarded — never stored.
+
+cj_product_links                      -- ties a local Product back to its CJ source
+  product_id           FK → products, unique, cascadeOnDelete
+  cj_product_id          string   -- CJ's `pid`
+  cj_variant_id             string, nullable  -- CJ's `vid`
+  cj_cost_price               decimal(10,2)    -- last-seen `sellPrice`/`variantSellPrice`
+  cj_warehouse_country           string, nullable  -- from inventories[].countryCode
+  cj_last_synced_at                 timestamp
+  timestamps
+```
+
+### Backend pieces
+
+- **`CjDropshippingClient`** — thin HTTP wrapper (Laravel `Http` facade) over
+  the four endpoints above. Takes a `VendorCjCredential`, auto-refreshes the
+  access token when it's near `access_token_expires_at`. Respects the
+  documented 1 req/sec limit on the auth endpoint specifically.
+- **`ProductImportFromCjService`** — given a CJ product/variant + a vendor:
+  creates the `Product` at `cj_cost_price × (1 + markup/100)`, downloads CJ's
+  image(s) and stores them locally via the **same** `ProductRepository::syncImages()`
+  path normal uploads use (never a hotlinked external URL), status defaults to
+  `draft` (same convention as manually-created products), writes `cj_product_links`.
+- **`cj:sync-prices` daily scheduled command** — for every vendor with a CJ
+  connection, re-queries `product/query` for each linked product; updates price
+  if cost moved; auto-flips to `draft` if `totalInventory` hits 0. Required, not
+  optional — otherwise a shop can keep selling something CJ no longer has.
+
+### Vendor dashboard UX
+
+**1. "CJ Dropshipping" settings page** (visible only once admin enables it):
+  - Connect form: single "CJ API Key" field → exchanged once for tokens via
+    `getAccessToken`, raw key discarded, only encrypted tokens kept.
+  - Status: "✓ Connected" / "Not connected", with a Disconnect action.
+  - Markup %: one number input, saving it immediately repricing every already-
+    imported CJ product from its last-known cost.
+
+**2. "Import from CJ"** — new button next to "+ New Product" in `Vendor → Products`:
+  - Submit-triggered search (keyword + category + max-cost filters), each result
+    showing thumbnail, title, CJ cost, ship-from country, and the vendor's own
+    computed sell price under their own markup — before anything is imported.
+  - Clicking a result opens a variant checklist (out-of-stock variants greyed
+    out); each checked variant imports as its own separate `Product` row
+    (e.g. "Saree — Red", "Saree — Blue") — no new "product variants" concept
+    needed, reuses the existing one-row-per-product schema.
+  - Imported products land in the normal product list as `draft`, flagged with
+    a small "CJ" badge, each with a manual "Resync from CJ" button in addition
+    to the daily job.
+  - **Open, not committed**: whether the imported description comes in as CJ's
+    raw (often rough machine-translated) text with a manual "✨ Improve with AI"
+    button next to it, or gets auto-rewritten on import. Leaning toward manual
+    button, not auto-rewrite, to avoid spending API calls on text nobody reviews.
+
+**3. Product page**: a shipping disclosure line for CJ-linked products — e.g.
+  *"Ships from overseas · Estimated delivery 2–4 weeks"* — derived from the
+  linked product's `cj_warehouse_country`.
+
+### Drawbacks (still real, now scoped to the per-vendor model)
+
+- **Asking vendors to generate and hand over a CJ API key is still a trust ask**,
+  even though it's safer than a password — a leaked/misused key on our end would
+  still let someone act on the vendor's CJ account (search, read inventory;
+  the catalog-only scope here never calls CJ's order-placement endpoints, so a
+  compromised key couldn't be used through *this app* to place orders — but the
+  key itself still grants whatever CJ's API allows beyond what we use it for).
+- **No fulfillment automation, by design.** A sale still depends on the vendor
+  manually placing the matching CJ order themselves after a Buy/Inquire contact.
+  Nothing in the app tracks whether that happened.
+- **Shipping-time / "local vendor" identity mismatch** — same concern as before,
+  just per-shop now instead of platform-wide: a dropshipped item next to
+  genuinely local inventory, on a site built around local trust.
+- **Price/stock drift inside the daily sync window** — inherent to catalog-only.
+- **1 req/sec auth rate limit** means connecting many vendors in quick succession
+  (e.g. a bulk-enable day) needs the token-refresh logic to queue/throttle rather
+  than fire in parallel.
+- **CJ's self-service API-key location wasn't verified** against real docs
+  (see note above) — confirm the exact vendor-facing instructions before writing
+  the connect-form copy, rather than guessing CJ's own UI labels.
+
+### Build order — all 8 steps complete (2026-10-03)
+
+1. ✅ Migrations (`vendor_cj_credentials`, `cj_product_links`,
+   `vendors.cj_dropshipping_enabled` + `cj_markup_percent`) + models.
+2. ✅ `CjDropshippingClient` (auth + refresh + search + detail), tested against
+   `Http::fake()` matching the documented contract above — no real CJ account
+   exists to test against live, so that's the honest limit of verification
+   possible right now (never tested against CJ's real servers).
+3. ✅ Admin toggle in `Admin → Vendors` (`enableCj`/`disableCj`).
+4. ✅ Vendor "CJ Dropshipping" settings page (`/vendor/cj` — connect, disconnect,
+   markup; changing markup immediately reprices existing CJ products).
+5. ✅ Search/import screen (`/vendor/cj/import`) + variant picker +
+   `ProductImportFromCjService` — imports land as `draft`, each variant becomes
+   its own `Product`, images downloaded to local storage (not hotlinked),
+   out-of-stock variants can't be imported even if checked.
+6. ✅ `cj:sync-products` daily command (`routes/console.php`, `Schedule::command(...)->daily()`)
+   — batches variants by CJ product ID to minimize API calls, reprices in-stock
+   items, auto-drafts out-of-stock ones, one vendor's CJ failure doesn't block others.
+7. ✅ Shipping-time disclosure on the product page (`CjProductLink::shippingEstimate()`).
+8. ✅ Tests throughout — `Http::fake()` everywhere, 28 new tests across client,
+   admin toggle, vendor settings, import flow, sync command, and the disclosure
+   badge. Full suite: 123/123 passing, Pint clean, PHPStan clean (only the
+   same pre-existing generics-annotation style gap already present throughout
+   the rest of the codebase).
+
+**Not verified**: no real CJ Dropshipping account/API key was available in this
+environment, so nothing here has been exercised against CJ's actual servers —
+only against their documented contract (verified via their published docs) and
+`Http::fake()`. The first real test should be one vendor connecting a real CJ
+account and importing one product, before enabling this for anyone else.

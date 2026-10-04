@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * @use HasFactory<ProductFactory>
@@ -62,5 +63,13 @@ class Product extends Model
     public function primaryImageUrl(): ?string
     {
         return $this->images->first()?->url();
+    }
+
+    /**
+     * @return HasOne<CjProductLink, $this>
+     */
+    public function cjLink(): HasOne
+    {
+        return $this->hasOne(CjProductLink::class);
     }
 }

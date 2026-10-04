@@ -54,6 +54,12 @@
                     {{ $product->price !== null ? '$'.number_format((float) $product->price, 2) : __('Contact for price') }}
                 </p>
 
+                @if($product->cjLink)
+                    <p class="mt-3 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700">
+                        🚚 {{ __('Ships from overseas · Estimated delivery :estimate', ['estimate' => $product->cjLink->shippingEstimate()]) }}
+                    </p>
+                @endif
+
                 @if($product->description)
                     <div class="mt-5 text-sm text-gray-600 leading-relaxed whitespace-pre-line">
                         {{ $product->description }}

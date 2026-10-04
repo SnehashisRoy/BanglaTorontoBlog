@@ -32,4 +32,18 @@ class VendorController extends Controller
 
         return redirect()->route('admin.vendors.index')->with('success', "{$vendor->name} moved back to pending — their shop is hidden until re-approved.");
     }
+
+    public function enableCj(Vendor $vendor): RedirectResponse
+    {
+        $this->vendors->setCjDropshippingEnabled($vendor, true);
+
+        return redirect()->route('admin.vendors.index')->with('success', "CJ Dropshipping enabled for {$vendor->name}.");
+    }
+
+    public function disableCj(Vendor $vendor): RedirectResponse
+    {
+        $this->vendors->setCjDropshippingEnabled($vendor, false);
+
+        return redirect()->route('admin.vendors.index')->with('success', "CJ Dropshipping disabled for {$vendor->name}.");
+    }
 }

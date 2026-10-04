@@ -58,6 +58,26 @@
                                 </button>
                             </form>
                         @endif
+
+                        @if($vendor->cj_dropshipping_enabled)
+                            <form action="{{ route('admin.vendors.disable-cj', $vendor) }}" method="POST">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit"
+                                        class="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-100 transition-colors">
+                                    📦 CJ: On
+                                </button>
+                            </form>
+                        @else
+                            <form action="{{ route('admin.vendors.enable-cj', $vendor) }}" method="POST">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit"
+                                        class="inline-flex items-center gap-1 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-200 transition-colors">
+                                    📦 CJ: Off
+                                </button>
+                            </form>
+                        @endif
                     </div>
                 </div>
             @endforeach
@@ -74,6 +94,7 @@
                         <th class="px-5 py-3 text-left font-semibold text-gray-600">Products</th>
                         <th class="px-5 py-3 text-left font-semibold text-gray-600">Requested</th>
                         <th class="px-5 py-3 text-left font-semibold text-gray-600">Status</th>
+                        <th class="px-5 py-3 text-left font-semibold text-gray-600">CJ Dropshipping</th>
                         <th class="px-5 py-3 text-left font-semibold text-gray-600">Actions</th>
                     </tr>
                 </thead>
@@ -90,6 +111,27 @@
                                     <span class="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">Approved</span>
                                 @else
                                     <span class="rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-700">Pending</span>
+                                @endif
+                            </td>
+                            <td class="px-5 py-3">
+                                @if($vendor->cj_dropshipping_enabled)
+                                    <form action="{{ route('admin.vendors.disable-cj', $vendor) }}" method="POST" class="inline">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit"
+                                                class="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700 hover:bg-indigo-200 transition-colors">
+                                            Enabled
+                                        </button>
+                                    </form>
+                                @else
+                                    <form action="{{ route('admin.vendors.enable-cj', $vendor) }}" method="POST" class="inline">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit"
+                                                class="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-500 hover:bg-gray-200 transition-colors">
+                                            Disabled
+                                        </button>
+                                    </form>
                                 @endif
                             </td>
                             <td class="px-5 py-3">

@@ -97,4 +97,35 @@ class VendorApprovalTest extends TestCase
         $response->assertForbidden();
         $this->assertDatabaseHas('vendors', ['id' => $vendor->id, 'status' => Vendor::STATUS_PENDING]);
     }
+
+    public function test_admin_can_enable_cj_dropshipping_for_a_vendor(): void
+    {
+        $vendor = Vendor::factory()->create();
+
+        $response = $this->actingAs($this->admin())->patch(route('admin.vendors.enable-cj', $vendor));
+
+        $response->assertRedirect(route('admin.vendors.index'));
+        $this->assertDatabaseHas('vendors', ['id' => $vendor->id, 'cj_dropshipping_enabled' => true]);
+    }
+
+    public function test_admin_can_disable_cj_dropshipping_for_a_vendor(): void
+    {
+        $vendor = Vendor::factory()->cjEnabled()->create();
+
+        $response = $this->actingAs($this->admin())->patch(route('admin.vendors.disable-cj', $vendor));
+
+        $response->assertRedirect(route('admin.vendors.index'));
+        $this->assertDatabaseHas('vendors', ['id' => $vendor->id, 'cj_dropshipping_enabled' => false]);
+    }
+
+    public function test_non_admin_cannot_toggle_cj_dropshipping(): void
+    {
+        $user = User::factory()->create();
+        $vendor = Vendor::factory()->create();
+
+        $response = $this->actingAs($user)->patch(route('admin.vendors.enable-cj', $vendor));
+
+        $response->assertForbidden();
+        $this->assertDatabaseHas('vendors', ['id' => $vendor->id, 'cj_dropshipping_enabled' => false]);
+    }
 }

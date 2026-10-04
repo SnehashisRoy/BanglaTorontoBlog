@@ -7,6 +7,8 @@ use App\Http\Controllers\Blog\PostController as BlogPostController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ShopController;
+use App\Http\Controllers\Vendor\CjImportController;
+use App\Http\Controllers\Vendor\CjSettingsController;
 use App\Http\Controllers\Vendor\DashboardController as VendorDashboardController;
 use App\Http\Controllers\Vendor\ProductController as VendorProductController;
 use App\Http\Controllers\Vendor\ProductSuggestionController;
@@ -46,6 +48,19 @@ Route::prefix('vendor')->name('vendor.')->middleware(['auth', 'vendor'])->group(
     Route::put('/shop', [VendorShopController::class, 'update'])->name('shop.update');
     Route::post('/products/suggest-description', [ProductSuggestionController::class, 'store'])->name('products.suggest-description');
     Route::resource('products', VendorProductController::class)->except(['show']);
+
+    Route::prefix('cj')->name('cj.')->group(function () {
+        Route::get('/', [CjSettingsController::class, 'edit'])->name('edit');
+        Route::post('/connect', [CjSettingsController::class, 'connect'])->name('connect');
+        Route::delete('/disconnect', [CjSettingsController::class, 'disconnect'])->name('disconnect');
+        Route::put('/markup', [CjSettingsController::class, 'updateMarkup'])->name('markup');
+
+        Route::prefix('import')->name('import.')->group(function () {
+            Route::get('/', [CjImportController::class, 'search'])->name('search');
+            Route::get('/{pid}', [CjImportController::class, 'show'])->name('show');
+            Route::post('/{pid}', [CjImportController::class, 'store'])->name('store');
+        });
+    });
 });
 
 // Redirect bare /blog to the default English version
@@ -76,6 +91,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::get('/', [AdminVendorController::class, 'index'])->name('index');
         Route::patch('/{vendor}/approve', [AdminVendorController::class, 'approve'])->name('approve');
         Route::patch('/{vendor}/mark-pending', [AdminVendorController::class, 'markPending'])->name('mark-pending');
+        Route::patch('/{vendor}/enable-cj', [AdminVendorController::class, 'enableCj'])->name('enable-cj');
+        Route::patch('/{vendor}/disable-cj', [AdminVendorController::class, 'disableCj'])->name('disable-cj');
     });
 });
 
