@@ -13,14 +13,17 @@ class HomeController extends Controller
 
     public function index(Request $request): View
     {
-        $products = $this->products->publishedFeed([
-            'category' => $request->query('category'),
-            'search' => $request->query('search'),
-        ]);
+        $search = $request->query('search');
+        $category = $request->query('category');
+        $isSearching = filled($search) || filled($category);
 
         $categories = ProductCategory::orderBy('name')->get();
         $featuredProducts = $this->products->featuredFeed();
 
-        return view('home', compact('products', 'categories', 'featuredProducts'));
+        $products = $isSearching
+            ? $this->products->publishedFeed(['category' => $category, 'search' => $search])
+            : null;
+
+        return view('home', compact('products', 'categories', 'featuredProducts', 'isSearching'));
     }
 }

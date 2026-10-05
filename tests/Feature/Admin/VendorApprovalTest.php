@@ -76,15 +76,16 @@ class VendorApprovalTest extends TestCase
     public function test_approving_a_vendor_makes_their_shop_and_products_publicly_visible(): void
     {
         $vendor = Vendor::factory()->pending()->create(['name' => 'Fresh Mart']);
-        Product::factory()->for($vendor)->create(['name' => 'Fresh Mangoes', 'status' => 'published']);
+        $product = Product::factory()->for($vendor)->create(['name' => 'Fresh Mangoes', 'status' => 'published']);
+        $productUrl = route('shops.products.show', ['vendor' => $vendor->slug, 'product' => $product->slug]);
 
         $this->get(route('shops.index'))->assertDontSee('Fresh Mart');
-        $this->get(route('home'))->assertDontSee('Fresh Mangoes');
+        $this->get(route('home', ['search' => 'Fresh Mangoes']))->assertDontSee($productUrl, false);
 
         $this->actingAs($this->admin())->patch(route('admin.vendors.approve', $vendor));
 
         $this->get(route('shops.index'))->assertSee('Fresh Mart');
-        $this->get(route('home'))->assertSee('Fresh Mangoes');
+        $this->get(route('home', ['search' => 'Fresh Mangoes']))->assertSee($productUrl, false);
     }
 
     public function test_non_admin_cannot_approve_a_vendor(): void

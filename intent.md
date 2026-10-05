@@ -670,3 +670,41 @@ Verified live against the running dev server: logged in as the seeded admin,
 created a real category, featured a real product via the admin UI, confirmed
 it appeared in the home page's new "Featured Products" section, then
 unfeatured it and deleted the test category — both cleanly reverted.
+
+## Follow-up: home page shows featured products only, search moved above (2026-10-05)
+
+User asked to move the search bar above the featured products section, and
+changed the home page's default behavior: it should no longer show the full
+"all products" grid at all — only featured products, normally. Search (by
+name/description, or by category) still works against the full catalog, same
+as before, and now visually replaces the featured section while a search is
+active, rather than sitting below it.
+
+`HomeController::index()` now computes `$isSearching = filled($search) ||
+filled($category)` and only runs `ProductRepository::publishedFeed()` when
+true; `featuredFeed()` is always computed. The view reorders to: hero →
+search/filter form → (searching ? search results grid : featured products,
+or an empty state for whichever is showing). `publishedFeed()`/`featuredFeed()`
+themselves were not changed — same published + vendor-approved visibility
+rule as before, confirmed unaffected by this change.
+
+One real test-writing gotcha hit while updating the existing
+`VendorApprovalTest`'s "approving a vendor makes products visible" test: it
+used to search for a product by its *exact* name and then `assertDontSee`
+that same string pre-approval — but the search `<input>` field echoes
+`request('search')` back into its `value` attribute regardless of whether
+anything matched, so the literal search term always "appears" on the page via
+the input box itself, making `assertDontSee($productName)` a false pass/fail
+independent of actual search results. Fixed by asserting on the product's
+actual detail-page URL (`route('shops.products.show', ...)`) instead of the
+product name — that string only appears when the product is genuinely in the
+results, not as a side effect of the form re-displaying the query.
+
+21 tests updated/added across `HomeTest` and `VendorApprovalTest` — full suite
+158/158 passing, Pint clean, PHPStan clean on the changed files (0 new
+errors). Verified live: default home page now shows the empty "No featured
+products yet" state (nothing currently featured on the real dev DB), search
+bar renders above where the featured section goes, featuring a real product
+makes it appear by default, searching for a *different, non-featured*
+product still finds it while hiding the featured heading, and all live test
+changes were reverted afterward.

@@ -30,16 +30,70 @@ class HomeTest extends TestCase
         $response->assertSee(route('logout'), false);
     }
 
-    public function test_home_page_only_shows_published_products_from_active_vendors(): void
+    public function test_home_page_shows_featured_products(): void
+    {
+        $vendor = Vendor::factory()->create();
+        $featured = Product::factory()->for($vendor)->featured()->create(['status' => 'published']);
+
+        $response = $this->get(route('home'));
+
+        $response->assertOk();
+        $response->assertSee($featured->name);
+        $response->assertSee('Featured Products');
+    }
+
+    public function test_home_page_only_shows_featured_products_by_default(): void
+    {
+        $vendor = Vendor::factory()->create();
+        $featured = Product::factory()->for($vendor)->featured()->create(['name' => 'Featured Saree', 'status' => 'published']);
+        $notFeatured = Product::factory()->for($vendor)->create(['name' => 'Plain Kurti', 'status' => 'published']);
+
+        $response = $this->get(route('home'));
+
+        $response->assertOk();
+        $response->assertSee($featured->name);
+        $response->assertDontSee($notFeatured->name);
+    }
+
+    public function test_home_page_shows_an_empty_state_when_nothing_is_featured(): void
+    {
+        $vendor = Vendor::factory()->create();
+        $product = Product::factory()->for($vendor)->create(['status' => 'published']);
+
+        $response = $this->get(route('home'));
+
+        $response->assertOk();
+        $response->assertDontSee('Featured Products');
+        $response->assertDontSee($product->name);
+        $response->assertSee('No featured products yet');
+    }
+
+    public function test_home_page_hides_featured_products_that_are_draft_or_from_inactive_vendors(): void
     {
         $activeVendor = Vendor::factory()->create();
         $inactiveVendor = Vendor::factory()->pending()->create();
 
-        $published = Product::factory()->for($activeVendor)->create(['status' => 'published']);
-        $draft = Product::factory()->for($activeVendor)->create(['status' => 'draft']);
-        $fromInactiveVendor = Product::factory()->for($inactiveVendor)->create(['status' => 'published']);
+        $draftFeatured = Product::factory()->for($activeVendor)->featured()->create(['status' => 'draft']);
+        $inactiveVendorFeatured = Product::factory()->for($inactiveVendor)->featured()->create(['status' => 'published']);
 
         $response = $this->get(route('home'));
+
+        $response->assertOk();
+        $response->assertDontSee('Featured Products');
+        $response->assertDontSee($draftFeatured->name);
+        $response->assertDontSee($inactiveVendorFeatured->name);
+    }
+
+    public function test_searching_only_shows_published_products_from_active_vendors(): void
+    {
+        $activeVendor = Vendor::factory()->create();
+        $inactiveVendor = Vendor::factory()->pending()->create();
+
+        $published = Product::factory()->for($activeVendor)->create(['name' => 'Searchable Published Item', 'status' => 'published']);
+        $draft = Product::factory()->for($activeVendor)->create(['name' => 'Searchable Draft Item', 'status' => 'draft']);
+        $fromInactiveVendor = Product::factory()->for($inactiveVendor)->create(['name' => 'Searchable Inactive Vendor Item', 'status' => 'published']);
+
+        $response = $this->get(route('home', ['search' => 'Searchable']));
 
         $response->assertOk();
         $response->assertSee($published->name);
@@ -63,42 +117,28 @@ class HomeTest extends TestCase
         $response->assertDontSee($unwanted->name);
     }
 
-    public function test_home_page_shows_featured_products(): void
+    public function test_searching_hides_the_featured_section_and_shows_only_matching_results(): void
     {
         $vendor = Vendor::factory()->create();
-        $featured = Product::factory()->for($vendor)->featured()->create(['status' => 'published']);
+        $featured = Product::factory()->for($vendor)->featured()->create(['name' => 'Featured Saree', 'status' => 'published']);
+        $match = Product::factory()->for($vendor)->create(['name' => 'Cotton Kurti', 'status' => 'published']);
 
-        $response = $this->get(route('home'));
-
-        $response->assertOk();
-        $response->assertSee($featured->name);
-        $response->assertSee('Featured Products');
-    }
-
-    public function test_home_page_does_not_show_a_featured_section_when_nothing_is_featured(): void
-    {
-        $vendor = Vendor::factory()->create();
-        Product::factory()->for($vendor)->create(['status' => 'published']);
-
-        $response = $this->get(route('home'));
+        $response = $this->get(route('home', ['search' => 'Kurti']));
 
         $response->assertOk();
         $response->assertDontSee('Featured Products');
+        $response->assertSee($match->name);
+        $response->assertDontSee($featured->name);
     }
 
-    public function test_home_page_hides_featured_products_that_are_draft_or_from_inactive_vendors(): void
+    public function test_search_with_no_matches_shows_an_empty_state(): void
     {
-        $activeVendor = Vendor::factory()->create();
-        $inactiveVendor = Vendor::factory()->pending()->create();
+        $vendor = Vendor::factory()->create();
+        Product::factory()->for($vendor)->create(['name' => 'Cotton Kurti', 'status' => 'published']);
 
-        $draftFeatured = Product::factory()->for($activeVendor)->featured()->create(['status' => 'draft']);
-        $inactiveVendorFeatured = Product::factory()->for($inactiveVendor)->featured()->create(['status' => 'published']);
-
-        $response = $this->get(route('home'));
+        $response = $this->get(route('home', ['search' => 'Nonexistent Item']));
 
         $response->assertOk();
-        $response->assertDontSee('Featured Products');
-        $response->assertDontSee($draftFeatured->name);
-        $response->assertDontSee($inactiveVendorFeatured->name);
+        $response->assertSee('No products found.');
     }
 }
