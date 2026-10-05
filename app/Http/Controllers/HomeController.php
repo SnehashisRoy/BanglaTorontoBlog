@@ -19,7 +19,8 @@ class HomeController extends Controller
         ]);
 
         $categories = ProductCategory::orderBy('name')->get();
+        $featuredProducts = $this->products->featuredFeed();
 
-        return view('home', compact('products', 'categories'));
+        return view('home', compact('products', 'categories', 'featuredProducts'));
     }
 }

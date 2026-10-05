@@ -18,13 +18,14 @@ class Product extends Model
     use HasFactory;
 
     protected $fillable = [
-        'vendor_id', 'product_category_id', 'name', 'slug', 'description', 'price', 'status',
+        'vendor_id', 'product_category_id', 'name', 'slug', 'description', 'price', 'status', 'is_featured',
     ];
 
     protected function casts(): array
     {
         return [
             'price' => 'decimal:2',
+            'is_featured' => 'boolean',
         ];
     }
 
@@ -58,6 +59,14 @@ class Product extends Model
     public function scopePublished(Builder $query): void
     {
         $query->where('status', 'published');
+    }
+
+    /**
+     * @param  Builder<Product>  $query
+     */
+    public function scopeFeatured(Builder $query): void
+    {
+        $query->where('is_featured', true);
     }
 
     public function primaryImageUrl(): ?string

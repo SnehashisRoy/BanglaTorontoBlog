@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\PostController as AdminPostController;
+use App\Http\Controllers\Admin\ProductCategoryController as AdminProductCategoryController;
+use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\VendorController as AdminVendorController;
 use App\Http\Controllers\Blog\CompanyController;
 use App\Http\Controllers\Blog\PostController as BlogPostController;
@@ -93,6 +95,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         Route::patch('/{vendor}/mark-pending', [AdminVendorController::class, 'markPending'])->name('mark-pending');
         Route::patch('/{vendor}/enable-cj', [AdminVendorController::class, 'enableCj'])->name('enable-cj');
         Route::patch('/{vendor}/disable-cj', [AdminVendorController::class, 'disableCj'])->name('disable-cj');
+    });
+
+    Route::resource('product-categories', AdminProductCategoryController::class)->except(['show']);
+
+    Route::prefix('products')->name('products.')->group(function () {
+        Route::get('/', [AdminProductController::class, 'index'])->name('index');
+        Route::patch('/{product}/feature', [AdminProductController::class, 'feature'])->name('feature');
+        Route::patch('/{product}/unfeature', [AdminProductController::class, 'unfeature'])->name('unfeature');
     });
 });
 

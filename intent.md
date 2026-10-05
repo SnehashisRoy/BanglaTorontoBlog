@@ -622,3 +622,51 @@ to avoid treating that string as a literal image URL.
 Verified against the real connected account: the exact product tested earlier
 really does have 4 gallery photos + 1 description-embedded image, all now
 captured by `CjDropshippingClient::productDetail()`.
+
+## Feature: admin product categories + featured products on the home page (2026-10-05)
+
+User asked for three tied-together things: an admin UI to manage product
+categories (previously `ProductCategory` had no admin UI at all — only ever
+seeded via `ProductCategorySeeder`), a "featured" flag on products, and an
+admin console to pick which products are featured, surfaced on the home page.
+
+Built, following the repository-pattern convention more rigorously than the
+existing `Admin\PostController` (which calls `Post::create()`/`update()`
+directly — a pre-existing inconsistency, not replicated here) and instead
+matching the Vendor-side convention (`VendorRepository`, `ProductRepository`)
+that every admin controller in this feature goes through a repository:
+
+- Migration: `is_featured` boolean on `products`, default `false`, indexed
+  alongside `status` (the exact pair `featuredFeed()` filters on).
+- `Product::scopeFeatured()`, alongside the existing `scopePublished()`.
+- `ProductCategoryRepository` (new) — CRUD + unique-slug generation, mirroring
+  `ProductRepository`'s existing per-vendor slug uniqueness pattern but
+  globally unique (categories have no vendor scope).
+- `ProductRepository::featuredFeed()`, `allForAdmin()`, `setFeatured()` added
+  to the existing repository. `featuredFeed()` applies the exact same
+  published + vendor-approved visibility rule as `publishedFeed()` — a
+  featured product from a pending/un-approved vendor, or a draft, never
+  appears, even if flagged featured (covered by a dedicated test).
+- `Admin\ProductCategoryController` (resourceful, index/create/store/edit/
+  update/destroy) and `Admin\ProductController` (index + feature/unfeature)
+  — both admin-only via the existing `admin` middleware.
+- Deleting a category sets `product_category_id` to `null` on its products
+  rather than deleting them (the FK was already `nullOnDelete()` from the
+  original migration — confirmed, not changed).
+- Admin nav gained "Products" and "Categories" links, same active-state
+  pattern as the existing Posts/Vendors links.
+- Home page gained a "Featured Products" section (shown only when at least
+  one featured product is visible) above the existing filterable grid.
+
+17 new tests added (category CRUD admin-gating, feature/unfeature
+admin-gating, home-page featured visibility including the draft/pending-vendor
+exclusion case) — full suite now 155/155 passing, Pint clean. PHPStan shows
+only the same pre-existing, already-tolerated error classes found everywhere
+else in the codebase (`missingType.generics` on `HasFactory`/`Collection`/
+`LengthAwarePaginator`, `missingType.iterableValue` on Form Request/repository
+array params) — no new error types introduced.
+
+Verified live against the running dev server: logged in as the seeded admin,
+created a real category, featured a real product via the admin UI, confirmed
+it appeared in the home page's new "Featured Products" section, then
+unfeatured it and deleted the test category — both cleanly reverted.

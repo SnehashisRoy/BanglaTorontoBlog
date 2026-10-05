@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\Product;
 use App\Models\Vendor;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Storage;
@@ -34,6 +35,43 @@ class ProductRepository
         }
 
         return $query->latest()->paginate($perPage)->withQueryString();
+    }
+
+    /**
+     * @return Collection<int, Product>
+     */
+    public function featuredFeed(int $limit = 8): Collection
+    {
+        return Product::with(['vendor', 'category', 'images'])
+            ->published()
+            ->featured()
+            ->whereHas('vendor', fn ($q) => $q->where('status', Vendor::STATUS_APPROVED))
+            ->latest()
+            ->limit($limit)
+            ->get();
+    }
+
+    public function allForAdmin(array $filters = [], int $perPage = 20): LengthAwarePaginator
+    {
+        $query = Product::with(['vendor', 'category']);
+
+        if (! empty($filters['search'])) {
+            $term = $filters['search'];
+            $query->where('name', 'like', "%{$term}%");
+        }
+
+        if (! empty($filters['featured'])) {
+            $query->featured();
+        }
+
+        return $query->latest()->paginate($perPage)->withQueryString();
+    }
+
+    public function setFeatured(Product $product, bool $featured): Product
+    {
+        $product->update(['is_featured' => $featured]);
+
+        return $product;
     }
 
     public function findPublished(string $vendorSlug, string $productSlug): Product

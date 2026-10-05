@@ -26,6 +26,14 @@
                        class="px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors {{ request()->routeIs('admin.posts.index') ? 'bg-gray-100 text-gray-900' : '' }}">
                         Posts
                     </a>
+                    <a href="{{ route('admin.products.index') }}"
+                       class="px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors {{ request()->routeIs('admin.products.*') ? 'bg-gray-100 text-gray-900' : '' }}">
+                        Products
+                    </a>
+                    <a href="{{ route('admin.product-categories.index') }}"
+                       class="px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors {{ request()->routeIs('admin.product-categories.*') ? 'bg-gray-100 text-gray-900' : '' }}">
+                        Categories
+                    </a>
                     <a href="{{ route('admin.vendors.index') }}"
                        class="relative px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors {{ request()->routeIs('admin.vendors.*') ? 'bg-gray-100 text-gray-900' : '' }}">
                         Vendors

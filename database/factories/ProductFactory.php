@@ -34,4 +34,11 @@ class ProductFactory extends Factory
             'status' => 'draft',
         ]);
     }
+
+    public function featured(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_featured' => true,
+        ]);
+    }
 }
