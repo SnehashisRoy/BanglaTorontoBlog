@@ -36,8 +36,6 @@
                     @auth
                         @if(auth()->user()->vendor)
                             <a href="{{ route('vendor.dashboard') }}" class="hover:text-gray-900">{{ __('My Shop') }}</a>
-                        @else
-                            <a href="{{ route('vendor.register') }}" class="hover:text-gray-900">{{ __('Sell With Us') }}</a>
                         @endif
 
                         @if(auth()->user()->is_admin)
@@ -48,8 +46,6 @@
                             @csrf
                             <button type="submit" class="hover:text-gray-900">{{ __('Log Out') }}</button>
                         </form>
-                    @else
-                        <a href="{{ route('vendor.intent', 'register') }}" class="hover:text-gray-900">{{ __('Sell With Us') }}</a>
                     @endauth
 
                     @if($showLocaleSwitch ?? false)
@@ -97,8 +93,6 @@
                 @auth
                     @if(auth()->user()->vendor)
                         <a href="{{ route('vendor.dashboard') }}" class="block py-1.5 hover:text-gray-900">{{ __('My Shop') }}</a>
-                    @else
-                        <a href="{{ route('vendor.register') }}" class="block py-1.5 hover:text-gray-900">{{ __('Sell With Us') }}</a>
                     @endif
 
                     @if(auth()->user()->is_admin)
@@ -109,8 +103,6 @@
                         @csrf
                         <button type="submit" class="block py-1.5 hover:text-gray-900">{{ __('Log Out') }}</button>
                     </form>
-                @else
-                    <a href="{{ route('vendor.intent', 'register') }}" class="block py-1.5 hover:text-gray-900">{{ __('Sell With Us') }}</a>
                 @endauth
 
                 @if($showLocaleSwitch ?? false)

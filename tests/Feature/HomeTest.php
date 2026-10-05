@@ -30,6 +30,49 @@ class HomeTest extends TestCase
         $response->assertSee(route('logout'), false);
     }
 
+    public function test_sell_with_us_is_no_longer_a_nav_link(): void
+    {
+        $response = $this->get(route('home'));
+
+        $response->assertOk();
+
+        $content = $response->getContent();
+        $headerEnd = strpos($content, '</header>');
+        $header = substr($content, 0, $headerEnd !== false ? $headerEnd : 0);
+
+        $this->assertStringNotContainsString('Sell With Us', $header);
+        $this->assertStringContainsString('Sell With Us', $content);
+    }
+
+    public function test_hero_has_a_sell_with_us_button_that_links_to_registration_for_a_guest(): void
+    {
+        $response = $this->get(route('home'));
+
+        $response->assertOk();
+        $response->assertSee('Sell With Us');
+        $response->assertSee(route('vendor.intent', 'register'), false);
+    }
+
+    public function test_hero_sell_with_us_button_links_to_vendor_registration_for_a_logged_in_non_vendor(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('home'));
+
+        $response->assertOk();
+        $response->assertSee(route('vendor.register'), false);
+    }
+
+    public function test_hero_sell_with_us_button_links_to_the_dashboard_for_an_existing_vendor(): void
+    {
+        $vendor = Vendor::factory()->create();
+
+        $response = $this->actingAs($vendor->user)->get(route('home'));
+
+        $response->assertOk();
+        $response->assertSee(route('vendor.dashboard'), false);
+    }
+
     public function test_home_page_shows_featured_products(): void
     {
         $vendor = Vendor::factory()->create();

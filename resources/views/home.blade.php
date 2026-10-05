@@ -16,13 +16,88 @@
             <p class="text-sm sm:text-base opacity-80 max-w-lg">
                 {{ __('Browse products from Bengali-owned shops across Toronto and the GTA.') }}
             </p>
-            <a href="{{ route('shops.index') }}"
-               class="mt-6 inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-transform hover:-translate-y-0.5"
-               style="background: #2ecc71; box-shadow: 0 8px 24px rgba(46,204,113,0.35);">
-                <span class="text-base">🏪</span>
-                {{ __('Browse All Shops') }}
-                <span aria-hidden="true">&rarr;</span>
-            </a>
+            <div class="mt-6 flex flex-wrap items-center gap-3">
+                <a href="{{ route('shops.index') }}"
+                   class="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-transform hover:-translate-y-0.5"
+                   style="background: #2ecc71; box-shadow: 0 8px 24px rgba(46,204,113,0.35);">
+                    <span class="text-base">🏪</span>
+                    {{ __('Browse All Shops') }}
+                    <span aria-hidden="true">&rarr;</span>
+                </a>
+                <button type="button"
+                        onclick="document.getElementById('sell-with-us-modal').classList.remove('hidden')"
+                        class="inline-flex items-center gap-2 rounded-lg border border-white/50 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10">
+                    <span class="text-base">✨</span>
+                    {{ __('Sell With Us') }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {{-- "Sell With Us" modal --}}
+    <div id="sell-with-us-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
+         onclick="if (event.target === this) this.classList.add('hidden')">
+        <div class="absolute inset-0 bg-black/50"></div>
+        <div class="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-6 sm:p-8">
+            <button type="button"
+                    onclick="document.getElementById('sell-with-us-modal').classList.add('hidden')"
+                    aria-label="{{ __('Close') }}"
+                    class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+
+            <h2 class="text-xl font-bold text-gray-900 mb-2">{{ __('Open your shop in minutes') }}</h2>
+            <p class="text-sm text-gray-500 mb-6">
+                {{ __("It's easier than you think — no design skills or writing needed.") }}
+            </p>
+
+            <ol class="space-y-4 mb-6">
+                <li class="flex items-start gap-3">
+                    <span class="shrink-0 flex items-center justify-center h-8 w-8 rounded-full text-sm font-bold text-white" style="background:#27ae60;">1</span>
+                    <div>
+                        <p class="text-sm font-semibold text-gray-900">{{ __('Upload a photo') }}</p>
+                        <p class="text-sm text-gray-500">{{ __('Just a picture of your product — that\'s all you need to start.') }}</p>
+                    </div>
+                </li>
+                <li class="flex items-start gap-3">
+                    <span class="shrink-0 flex items-center justify-center h-8 w-8 rounded-full text-sm font-bold text-white" style="background:#27ae60;">2</span>
+                    <div>
+                        <p class="text-sm font-semibold text-gray-900">{{ __('We write the title & description') }}</p>
+                        <p class="text-sm text-gray-500">{{ __('Our AI suggests a title and description from your photo — edit if you like, or just go with it.') }}</p>
+                    </div>
+                </li>
+                <li class="flex items-start gap-3">
+                    <span class="shrink-0 flex items-center justify-center h-8 w-8 rounded-full text-sm font-bold text-white" style="background:#27ae60;">3</span>
+                    <div>
+                        <p class="text-sm font-semibold text-gray-900">{{ __("You're live") }}</p>
+                        <p class="text-sm text-gray-500">{{ __('Set a price and you\'re ready to go — no coding, no setup fees.') }}</p>
+                    </div>
+                </li>
+            </ol>
+
+            @auth
+                @if(auth()->user()->vendor)
+                    <a href="{{ route('vendor.dashboard') }}"
+                       class="block w-full text-center rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5"
+                       style="background:#27ae60;">
+                        {{ __('Go to My Dashboard') }}
+                    </a>
+                @else
+                    <a href="{{ route('vendor.register') }}"
+                       class="block w-full text-center rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5"
+                       style="background:#27ae60;">
+                        {{ __('Create Your Shop') }}
+                    </a>
+                @endif
+            @else
+                <a href="{{ route('vendor.intent', 'register') }}"
+                   class="block w-full text-center rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5"
+                   style="background:#27ae60;">
+                    {{ __('Get Started') }}
+                </a>
+            @endauth
         </div>
     </div>
 

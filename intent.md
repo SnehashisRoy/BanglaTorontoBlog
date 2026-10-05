@@ -708,3 +708,35 @@ bar renders above where the featured section goes, featuring a real product
 makes it appear by default, searching for a *different, non-featured*
 product still finds it while hiding the featured heading, and all live test
 changes were reverted afterward.
+
+## Follow-up: "Sell With Us" moved from nav into a hero modal (2026-10-05)
+
+User asked to remove "Sell With Us" from the top nav (both desktop and
+mobile, in `layouts/public.blade.php`) and instead add a button beside
+"Browse All Shops" in the home page hero that opens a modal pitching how easy
+it is to open a shop (upload a photo → AI writes the title/description →
+you're live) — directly referencing the real AI-description feature already
+built, not a hypothetical one.
+
+Removed the `Sell With Us` `<a>` from both the authenticated-non-vendor and
+guest branches of the desktop nav and the mobile nav panel (the `@auth`
+vendor-dashboard link and admin link stay; only the "sell with us" entry
+point moves). The footer CTA ("Have products to sell?" / Register / Create
+Your Shop) was left untouched — user asked specifically about the nav, and
+the footer isn't the nav.
+
+Added a plain vanilla-JS modal in `home.blade.php` (no Alpine/library in this
+app — matches the existing mobile-nav hamburger's
+`classList.toggle('hidden')` convention) triggered by the new hero button,
+with a 3-step pitch and a CTA that branches the same way the footer CTA
+already does: vendor dashboard if already a vendor, `vendor.register` if
+logged in without a shop, `vendor.intent('register')` (preserves intent
+through the login/register detour) for guests.
+
+6 tests added to `HomeTest` (nav no longer contains the string, inside a
+specific `</header>`-scoped check so it doesn't false-pass just because the
+hero button reuses the same label; CTA routes correctly branch by auth/vendor
+state) — full suite 162/162 passing, Pint clean. Verified live: nav has zero
+"Sell With Us" occurrences, the hero button and modal markup render exactly
+once, both `/shops` and `/en/blog` (which share the same layout) still render
+fine.
