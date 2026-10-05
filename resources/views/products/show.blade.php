@@ -66,48 +66,91 @@
                     </div>
                 @endif
 
-                {{-- Buy / Inquire — reveals vendor contact details --}}
+                {{-- Buy / Inquire — opens a modal to start a WhatsApp/email conversation with the vendor --}}
                 <div class="mt-6">
-                    <button type="button" onclick="document.getElementById('contact-panel').classList.remove('hidden'); this.classList.add('hidden')"
+                    <button type="button" onclick="document.getElementById('inquiry-modal').classList.remove('hidden')"
                             class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-[#27ae60] px-5 py-3 text-sm font-semibold text-white hover:bg-[#1a7a44] transition-colors">
                         {{ __('Buy / Inquire') }}
                     </button>
-
-                    <div id="contact-panel" class="hidden mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-2 text-sm">
-                        <p class="font-semibold text-gray-900 mb-2">{{ __('Contact :shop', ['shop' => $product->vendor->name]) }}</p>
-
-                        <p class="flex items-center gap-2 text-gray-700">
-                            <span>📞</span>
-                            <a href="tel:{{ $product->vendor->phone }}" class="hover:text-[#27ae60]">{{ $product->vendor->phone }}</a>
-                        </p>
-
-                        @if($product->vendor->whatsapp)
-                            <p class="flex items-center gap-2 text-gray-700">
-                                <span>💬</span>
-                                <a href="https://wa.me/{{ preg_replace('/\D/', '', $product->vendor->whatsapp) }}"
-                                   target="_blank" rel="noopener" class="hover:text-[#27ae60]">
-                                    {{ __('WhatsApp') }}: {{ $product->vendor->whatsapp }}
-                                </a>
-                            </p>
-                        @endif
-
-                        @if($product->vendor->email)
-                            <p class="flex items-center gap-2 text-gray-700">
-                                <span>✉️</span>
-                                <a href="mailto:{{ $product->vendor->email }}" class="hover:text-[#27ae60]">{{ $product->vendor->email }}</a>
-                            </p>
-                        @endif
-
-                        @if($product->vendor->address)
-                            <p class="flex items-start gap-2 text-gray-700">
-                                <span>📍</span>
-                                <span>{{ $product->vendor->address }}</span>
-                            </p>
-                        @endif
-                    </div>
                 </div>
             </div>
         </div>
     </div>
 
+    {{-- Inquiry modal --}}
+    @php
+        $productUrl = route('shops.products.show', ['vendor' => $product->vendor->slug, 'product' => $product->slug]);
+        $inquiryMessage = __(
+            "Hi :vendor, I am interested in :product. Is it still available?\n\n:url",
+            ['vendor' => $product->vendor->name, 'product' => $product->name, 'url' => $productUrl]
+        );
+        $inquirySubject = __('Inquiry about :product', ['product' => $product->name]);
+    @endphp
+    <div id="inquiry-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
+         onclick="if (event.target === this) this.classList.add('hidden')">
+        <div class="absolute inset-0 bg-black/50"></div>
+        <div class="relative bg-white rounded-2xl shadow-xl max-w-md w-full p-6 sm:p-8">
+            <button type="button"
+                    onclick="document.getElementById('inquiry-modal').classList.add('hidden')"
+                    aria-label="{{ __('Close') }}"
+                    class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+
+            <h2 class="text-lg font-bold text-gray-900 mb-1">{{ __('Contact :shop', ['shop' => $product->vendor->name]) }}</h2>
+            <p class="text-sm text-gray-500 mb-4">{{ __('Send a message to start the conversation.') }}</p>
+
+            <label for="inquiry-message" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Your message') }}</label>
+            <textarea id="inquiry-message" rows="5"
+                      class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm mb-4 focus:border-[#27ae60] focus:outline-none focus:ring-1 focus:ring-[#27ae60]">{{ $inquiryMessage }}</textarea>
+
+            <div class="space-y-2">
+                @if($product->vendor->whatsapp)
+                    <button type="button"
+                            onclick="sendInquiry('whatsapp', '{{ preg_replace('/\D/', '', $product->vendor->whatsapp) }}')"
+                            class="w-full inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-colors"
+                            style="background:#25D366;">
+                        💬 {{ __('Send via WhatsApp') }}
+                    </button>
+                @endif
+
+                @if($product->vendor->email)
+                    <button type="button"
+                            onclick="sendInquiry('email', {{ json_encode($product->vendor->email) }}, {{ json_encode($inquirySubject) }})"
+                            class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+                        ✉️ {{ __('Send via Email') }}
+                    </button>
+                @endif
+
+                <a href="tel:{{ $product->vendor->phone }}"
+                   class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+                    📞 {{ __('Call :phone', ['phone' => $product->vendor->phone]) }}
+                </a>
+            </div>
+
+            @if($product->vendor->address)
+                <p class="mt-4 flex items-start gap-2 text-sm text-gray-500">
+                    <span>📍</span>
+                    <span>{{ $product->vendor->address }}</span>
+                </p>
+            @endif
+        </div>
+    </div>
+
 @endsection
+
+@push('scripts')
+<script>
+    function sendInquiry(channel, target, subject) {
+        var message = document.getElementById('inquiry-message').value.trim();
+
+        if (channel === 'whatsapp') {
+            window.open('https://wa.me/' + target + '?text=' + encodeURIComponent(message), '_blank');
+        } else if (channel === 'email') {
+            window.location.href = 'mailto:' + target + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(message);
+        }
+    }
+</script>
+@endpush

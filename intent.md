@@ -740,3 +740,47 @@ state) — full suite 162/162 passing, Pint clean. Verified live: nav has zero
 "Sell With Us" occurrences, the hero button and modal markup render exactly
 once, both `/shops` and `/en/blog` (which share the same layout) still render
 fine.
+
+## Feature: buyer inquiry modal with a prefilled WhatsApp/email message (2026-10-05)
+
+User asked whether letting buyers message vendors via WhatsApp/email from a
+modal would cost money. Answer given: no, as long as it's built the same way
+vendor contact was already revealed elsewhere in the app (`wa.me` and
+`mailto:` deep links that just hand off to the buyer's own WhatsApp/email
+client) rather than sending anything server-side — no WhatsApp Business API,
+no transactional email service, no per-message cost. User asked to implement
+it on that basis.
+
+Replaced the old "Buy / Inquire" contact panel on the product page
+(`products/show.blade.php`) — which only revealed plain, blank wa.me/tel/
+mailto links — with a modal containing an editable, prefilled message
+("Hi {vendor}, I am interested in {product}. Is it still available?" plus
+the product's own URL) and one button per channel the vendor actually has:
+"Send via WhatsApp" (`wa.me/<digits-only-phone>?text=<encoded message>`,
+opens in a new tab) and "Send via Email" (`mailto:<email>?subject=Inquiry
+about <product>&body=<encoded message>`). A plain `tel:` Call link is always
+shown. Buttons for channels the vendor hasn't filled in (no `whatsapp` or no
+`email` on file) are simply omitted rather than shown disabled.
+
+Implementation is 100% client-side vanilla JS (`sendInquiry()`, matching the
+existing hamburger-menu/modal `classList` convention already used elsewhere
+in this app — still no Alpine or other JS library) — the textarea's live
+value is read at click time and URL-encoded into the `wa.me`/`mailto:` link,
+so the buyer can edit the default message before it's sent. One real
+escaping subtlety handled on purpose: the email button's `onclick` passes
+the vendor's email and subject through `json_encode()` inside the Blade
+`{{ }}` echo — Blade's HTML-escaping converts the JSON string's `"`
+characters to `&quot;`, which the browser correctly decodes back to literal
+`"` before the inline JS executes, so values containing apostrophes or
+special characters (a product name, say) can't break the attribute or the
+script. Verified this renders correctly against the real dev server, not
+just reasoned through.
+
+4 tests added to `ProductTest` (WhatsApp link uses digits-only phone and
+includes the message; email button appears only when the vendor has an
+email; both buttons are hidden — Call link still present — when the vendor
+has neither; tel link renders). Full suite 166/166 passing, Pint clean.
+Verified live: a real published product's page renders the modal with a
+correct prefilled message (vendor name, product name, product URL on its own
+line), correct wa.me/mailto targets, and a vendor with neither whatsapp nor
+email on file correctly shows only the Call button.

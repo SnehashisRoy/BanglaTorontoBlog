@@ -73,4 +73,53 @@ class ProductTest extends TestCase
         $response->assertOk();
         $response->assertDontSee('Ships from overseas');
     }
+
+    public function test_inquiry_modal_offers_a_whatsapp_link_prefilled_with_a_message(): void
+    {
+        $vendor = Vendor::factory()->create(['whatsapp' => '+1 (416) 555-0199', 'name' => 'Fresh Mart']);
+        $product = Product::factory()->for($vendor)->create(['name' => 'Fresh Mangoes', 'status' => 'published']);
+
+        $response = $this->get(route('shops.products.show', ['vendor' => $vendor->slug, 'product' => $product->slug]));
+
+        $response->assertOk();
+        $response->assertSee("sendInquiry('whatsapp', '14165550199')", false);
+        $response->assertSee('Fresh Mangoes');
+        $response->assertSee('Fresh Mart');
+    }
+
+    public function test_inquiry_modal_offers_an_email_button_when_vendor_has_an_email(): void
+    {
+        $vendor = Vendor::factory()->create(['email' => 'shop@example.com']);
+        $product = Product::factory()->for($vendor)->create(['status' => 'published']);
+
+        $response = $this->get(route('shops.products.show', ['vendor' => $vendor->slug, 'product' => $product->slug]));
+
+        $response->assertOk();
+        $response->assertSee('shop@example.com');
+        $response->assertSee('Send via Email');
+    }
+
+    public function test_inquiry_modal_hides_whatsapp_and_email_buttons_when_vendor_has_neither(): void
+    {
+        $vendor = Vendor::factory()->create(['whatsapp' => null, 'email' => null]);
+        $product = Product::factory()->for($vendor)->create(['status' => 'published']);
+
+        $response = $this->get(route('shops.products.show', ['vendor' => $vendor->slug, 'product' => $product->slug]));
+
+        $response->assertOk();
+        $response->assertDontSee('Send via WhatsApp');
+        $response->assertDontSee('Send via Email');
+        $response->assertSee('Call');
+    }
+
+    public function test_inquiry_modal_has_a_tel_link_to_the_vendor_phone(): void
+    {
+        $vendor = Vendor::factory()->create(['phone' => '416-555-0100']);
+        $product = Product::factory()->for($vendor)->create(['status' => 'published']);
+
+        $response = $this->get(route('shops.products.show', ['vendor' => $vendor->slug, 'product' => $product->slug]));
+
+        $response->assertOk();
+        $response->assertSee('href="tel:416-555-0100"', false);
+    }
 }
