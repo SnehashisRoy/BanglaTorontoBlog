@@ -32,7 +32,7 @@ class ProductImportFromCjService
 
         $newProduct = $this->products->createForVendor($vendor, [
             'name' => $name,
-            'description' => $product->description,
+            'description' => $this->cleanDescription($product->description),
             'price' => $price,
             'status' => 'draft',
         ]);
@@ -50,6 +50,32 @@ class ProductImportFromCjService
         ]);
 
         return $newProduct;
+    }
+
+    /**
+     * CJ's description comes back as HTML (`<p>`, `&nbsp;`, even embedded
+     * `<img>` tags) — confirmed on a real import. Every other product
+     * description in this app (manually typed, or AI-suggested) is plain
+     * text, rendered with `{{ }}` (which escapes HTML, showing literal tags
+     * rather than formatting them) — so this converts rather than special-
+     * casing CJ-sourced products' rendering everywhere else.
+     */
+    private function cleanDescription(?string $html): ?string
+    {
+        if ($html === null || trim($html) === '') {
+            return null;
+        }
+
+        $text = preg_replace('/<br\s*\/?>/i', "\n", $html) ?? $html;
+        $text = preg_replace('/<\/p>\s*<p[^>]*>/i', "\n\n", $text) ?? $text;
+        $text = strip_tags($text);
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5);
+        $text = str_replace("\u{00A0}", ' ', $text); // non-breaking space -> plain space
+        $text = preg_replace('/[ \t]+/', ' ', $text) ?? $text;
+        $text = preg_replace('/\n{3,}/', "\n\n", $text) ?? $text;
+        $text = trim($text);
+
+        return $text !== '' ? $text : null;
     }
 
     /**

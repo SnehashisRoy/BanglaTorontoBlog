@@ -581,3 +581,19 @@ not shown or factored into price anywhere. Integrating it would mean calling
 nothing in this app collects one today (no checkout, no customer address; the
 vendor would need a "default ship-to country" setting of their own). Flagged
 back to the user as a decision point, not built speculatively.
+
+## Follow-up: CJ's description is HTML, not plain text (2026-10-04)
+
+User-reported: imported products showed literal HTML tags in the description.
+Confirmed — CJ's `description` field is real HTML (`<p>`, `&nbsp;`, even
+embedded `<img>` tags, seen directly in the earlier real-account capture), but
+every other product description in this app (manually typed, or AI-suggested)
+is plain text, rendered with `{{ }}` (escapes HTML rather than formatting it).
+Fixed in `ProductImportFromCjService::cleanDescription()`: strips tags,
+converts `<br>`/paragraph boundaries to blank lines, decodes entities, and
+normalizes non-breaking spaces (`&nbsp;` → U+00A0) to plain ASCII spaces —
+leaving `&nbsp;` as a real but invisible non-breaking-space character would
+have caused exactly this kind of silent, hard-to-spot mismatch again later
+(e.g. a vendor searching/editing the text and the match failing with no
+visible reason). Verified against the exact real HTML captured from the live
+account earlier in this build — output is clean, readable plain text.

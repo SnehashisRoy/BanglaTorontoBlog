@@ -159,6 +159,50 @@ class CjImportTest extends TestCase
         ]);
     }
 
+    /**
+     * CJ's description is HTML (confirmed on a real import — <p>, &nbsp;,
+     * even embedded <img> tags). Every other product description in this app
+     * is plain text rendered with `{{ }}`, which escapes HTML rather than
+     * formatting it — so the raw tags must never reach the stored value.
+     */
+    public function test_imported_description_has_html_stripped_to_plain_text(): void
+    {
+        Storage::fake('public');
+        $vendor = $this->connectedVendor();
+
+        Http::fake([
+            '*/product/query*' => Http::response([
+                'result' => true,
+                'data' => [
+                    'pid' => '1001',
+                    'productNameEn' => 'Shirt',
+                    'sellPrice' => '8.40',
+                    'description' => "<p>Composition:&nbsp;100% Polyester</p>\n <p>Material:&nbsp;Polyester</p>\n <p>Collar Style:&nbsp;Lapel<br/><img src=\"https://cf.example/x.png\" style=\"max-width:100%;\"/></p>",
+                    'variants' => [
+                        [
+                            'vid' => 'v-red',
+                            'variantKey' => 'Red',
+                            'variantSellPrice' => '8.40',
+                            'inventories' => [['countryCode' => 'US', 'totalInventory' => 5]],
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $this->actingAs($vendor->user)->post(route('vendor.cj.import.store', '1001'), [
+            'variant_ids' => ['v-red'],
+        ]);
+
+        $product = Product::where('vendor_id', $vendor->id)->first();
+
+        $this->assertStringNotContainsString('<p>', $product->description);
+        $this->assertStringNotContainsString('&nbsp;', $product->description);
+        $this->assertStringNotContainsString('<img', $product->description);
+        $this->assertStringContainsString('Composition: 100% Polyester', $product->description);
+        $this->assertStringContainsString('Collar Style: Lapel', $product->description);
+    }
+
     public function test_out_of_stock_variants_cannot_be_imported_even_if_requested(): void
     {
         Storage::fake('public');
