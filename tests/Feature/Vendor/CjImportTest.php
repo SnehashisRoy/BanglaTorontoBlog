@@ -203,6 +203,62 @@ class CjImportTest extends TestCase
         $this->assertStringContainsString('Collar Style: Lapel', $product->description);
     }
 
+    /**
+     * CJ products carry more than one photo: a per-variant photo, a product
+     * gallery (productImageSet), and sometimes illustrative images embedded
+     * inside the description itself — all of which should land in the
+     * product's gallery, not just a single "main" photo, and not duplicated
+     * when the same URL appears in more than one of those sources.
+     */
+    public function test_import_pulls_in_the_variant_photo_the_gallery_and_description_images(): void
+    {
+        Storage::fake('public');
+        $vendor = $this->connectedVendor();
+
+        Http::fake([
+            '*/product/query*' => Http::response([
+                'result' => true,
+                'data' => [
+                    'pid' => '1001',
+                    'productNameEn' => 'Shirt',
+                    'sellPrice' => '8.40',
+                    'bigImage' => 'https://cj.example/main.jpg',
+                    'productImageSet' => [
+                        'https://cj.example/main.jpg', // duplicate of bigImage — must not double up
+                        'https://cj.example/gallery-2.jpg',
+                    ],
+                    'description' => '<p>Collar close-up:<br/><img src="https://cj.example/desc-image.jpg"/></p>',
+                    'variants' => [
+                        [
+                            'vid' => 'v-red',
+                            'variantKey' => 'Red',
+                            'variantSellPrice' => '8.40',
+                            'variantImage' => 'https://cj.example/variant-red.jpg',
+                            'inventories' => [['countryCode' => 'US', 'totalInventory' => 5]],
+                        ],
+                    ],
+                ],
+            ], 200),
+            'https://cj.example/main.jpg' => Http::response('main-image-bytes', 200, ['Content-Type' => 'image/jpeg']),
+            'https://cj.example/gallery-2.jpg' => Http::response('gallery-2-bytes', 200, ['Content-Type' => 'image/jpeg']),
+            'https://cj.example/desc-image.jpg' => Http::response('desc-image-bytes', 200, ['Content-Type' => 'image/jpeg']),
+            'https://cj.example/variant-red.jpg' => Http::response('variant-red-bytes', 200, ['Content-Type' => 'image/jpeg']),
+        ]);
+
+        $this->actingAs($vendor->user)->post(route('vendor.cj.import.store', '1001'), [
+            'variant_ids' => ['v-red'],
+        ]);
+
+        $product = Product::where('vendor_id', $vendor->id)->first()->load('images');
+
+        // variant photo, main/gallery (deduped), gallery-2, description image = 4, not 5.
+        $this->assertCount(4, $product->images);
+
+        // The variant's own photo takes priority — it should be the primary (first) image.
+        $firstImageContents = Storage::disk('public')->get($product->images->first()->path);
+        $this->assertSame('variant-red-bytes', $firstImageContents);
+    }
+
     public function test_out_of_stock_variants_cannot_be_imported_even_if_requested(): void
     {
         Storage::fake('public');

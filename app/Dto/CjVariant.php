@@ -29,6 +29,7 @@ final class CjVariant
         public readonly float $sellPrice,
         public readonly ?int $totalInventory,
         public readonly ?string $warehouseCountry,
+        public readonly ?string $imageUrl,
     ) {}
 
     /**
@@ -63,6 +64,7 @@ final class CjVariant
             sellPrice: (float) ($data['variantSellPrice'] ?? $data['sellPrice'] ?? 0),
             totalInventory: isset($inventory['totalInventory']) ? (int) $inventory['totalInventory'] : null,
             warehouseCountry: $inventory['countryCode'] ?? null,
+            imageUrl: $data['variantImage'] ?? null,
         );
     }
 

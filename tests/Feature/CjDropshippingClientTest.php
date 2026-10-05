@@ -306,4 +306,70 @@ class CjDropshippingClientTest extends TestCase
         $this->assertFalse($variant->stockKnown());
         $this->assertTrue($variant->inStock());
     }
+
+    /**
+     * CJ products carry more than one photo: productImageSet (a real gallery
+     * array) and a per-variant image, plus CJ descriptions can embed their
+     * own illustrative <img> tags — none of that should be lost.
+     */
+    public function test_product_detail_collects_the_gallery_and_description_images(): void
+    {
+        $credential = VendorCjCredential::factory()->create([
+            'access_token' => 'token-abc',
+            'access_token_expires_at' => now()->addDays(100),
+        ]);
+
+        Http::fake([
+            '*/product/query*' => Http::response([
+                'result' => true,
+                'data' => [
+                    'pid' => '1001',
+                    'productNameEn' => 'Shirt',
+                    'sellPrice' => '16.70',
+                    'bigImage' => 'https://cf.example/main.jpg',
+                    'productImageSet' => ['https://cf.example/main.jpg', 'https://cf.example/gallery-2.jpg'],
+                    'description' => '<p>Detail:<br/><img src="https://cf.example/desc.jpg"/></p>',
+                    'variants' => [
+                        [
+                            'vid' => 'v-red',
+                            'variantKey' => 'Red',
+                            'variantSellPrice' => '16.70',
+                            'variantImage' => 'https://cf.example/variant-red.jpg',
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $detail = $this->client()->productDetail($credential, '1001');
+
+        $this->assertSame('https://cf.example/main.jpg', $detail->imageUrl);
+        $this->assertSame(['https://cf.example/main.jpg', 'https://cf.example/gallery-2.jpg'], $detail->imageUrls);
+        $this->assertSame(['https://cf.example/desc.jpg'], $detail->descriptionImageUrls);
+        $this->assertSame('https://cf.example/variant-red.jpg', $detail->variants[0]->imageUrl);
+    }
+
+    public function test_product_image_set_falls_back_to_big_image_when_cj_omits_the_gallery(): void
+    {
+        $credential = VendorCjCredential::factory()->create([
+            'access_token' => 'token-abc',
+            'access_token_expires_at' => now()->addDays(100),
+        ]);
+
+        Http::fake([
+            '*/product/query*' => Http::response([
+                'result' => true,
+                'data' => [
+                    'pid' => '1001',
+                    'bigImage' => 'https://cf.example/only.jpg',
+                    'sellPrice' => '16.70',
+                    'variants' => [],
+                ],
+            ], 200),
+        ]);
+
+        $detail = $this->client()->productDetail($credential, '1001');
+
+        $this->assertSame(['https://cf.example/only.jpg'], $detail->imageUrls);
+    }
 }

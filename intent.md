@@ -597,3 +597,28 @@ have caused exactly this kind of silent, hard-to-spot mismatch again later
 (e.g. a vendor searching/editing the text and the match failing with no
 visible reason). Verified against the exact real HTML captured from the live
 account earlier in this build — output is clean, readable plain text.
+
+## Follow-up: only one photo was ever imported, images in the description were discarded (2026-10-04)
+
+User asked whether the "lot of images" in a CJ description would survive —
+they didn't, `strip_tags()` removed `<img>` tags along with everything else.
+Separately, only one image was ever downloaded per import (`bigImage`), even
+though CJ provides a real multi-photo gallery (`productImageSet`) and often a
+distinct photo per variant (`variantImage`) — confirmed on the real connected
+account: one real product had 4 gallery photos plus 1 image embedded in its
+description, all previously reduced to just the single `bigImage`.
+
+Fixed in `CjProductDetail`/`CjVariant` (capture `imageUrls` from
+`productImageSet`, `descriptionImageUrls` extracted from the raw HTML
+*before* it's stripped to plain text, and `CjVariant::imageUrl` from
+`variantImage`) and `ProductImportFromCjService::imageUrlsFor()` (gathers
+variant photo → gallery → description images, in that priority order so the
+most specific photo becomes primary, deduplicates, caps at 8 — matching the
+manual-upload form's existing limit). One real quirk worth noting: CJ's
+`productImage` field (no "Set") is, in practice, a JSON-encoded *string* of
+the same list, not a real array — deliberately not used as a fallback source,
+to avoid treating that string as a literal image URL.
+
+Verified against the real connected account: the exact product tested earlier
+really does have 4 gallery photos + 1 description-embedded image, all now
+captured by `CjDropshippingClient::productDetail()`.

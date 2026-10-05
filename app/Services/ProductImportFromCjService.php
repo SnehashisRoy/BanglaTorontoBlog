@@ -19,6 +19,13 @@ use Illuminate\Support\Str;
  */
 class ProductImportFromCjService
 {
+    /**
+     * Matches the max photo count the manual upload form already enforces
+     * (StoreProductRequest), so an import can't exceed what the product
+     * edit form itself would ever allow.
+     */
+    private const MAX_IMAGES = 8;
+
     public function __construct(
         private readonly ProductRepository $products,
         private readonly CjCurrencyConverter $currency,
@@ -37,8 +44,13 @@ class ProductImportFromCjService
             'status' => 'draft',
         ]);
 
-        if ($product->imageUrl && ($file = $this->downloadAsUploadedFile($product->imageUrl))) {
-            $this->products->syncImages($newProduct, [$file]);
+        $files = array_filter(array_map(
+            fn (string $url) => $this->downloadAsUploadedFile($url),
+            $this->imageUrlsFor($product, $variant),
+        ));
+
+        if (! empty($files)) {
+            $this->products->syncImages($newProduct, $files);
         }
 
         $newProduct->cjLink()->create([
@@ -50,6 +62,27 @@ class ProductImportFromCjService
         ]);
 
         return $newProduct;
+    }
+
+    /**
+     * All the images worth pulling in for this variant, in priority order:
+     * the variant's own photo (most specific — e.g. the actual red one, not
+     * a generic shot), then CJ's product gallery, then any images that were
+     * embedded inside the description itself (confirmed real — CJ
+     * descriptions can contain illustrative <img> tags). Deduplicated and
+     * capped so an import can never exceed what the product form allows.
+     *
+     * @return array<string>
+     */
+    private function imageUrlsFor(CjProductDetail $product, CjVariant $variant): array
+    {
+        $urls = array_filter([
+            $variant->imageUrl,
+            ...$product->imageUrls,
+            ...$product->descriptionImageUrls,
+        ]);
+
+        return array_slice(array_values(array_unique($urls)), 0, self::MAX_IMAGES);
     }
 
     /**
